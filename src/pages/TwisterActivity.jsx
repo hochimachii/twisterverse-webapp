@@ -432,7 +432,7 @@ export default function TwisterActivity() {
           setShowValidation(true);
           setFeedback(
             err?.code === "functions/unauthenticated"
-              ? "\u26A0\uFE0F Kailangan mong mag-log in bago gumana ang pagbigkas dito."
+              ? "\u26A0\uFE0F Kailangan mong pumasok muna bago gumana ang pagbigkas dito."
               : "\u26A0\uFE0F Hindi ma-proseso ang boses. Tingnan ang internet mo, tapos subukan ulit."
           );
           setFeedbackTier("error");
@@ -685,9 +685,9 @@ export default function TwisterActivity() {
 
             {needsLoginForSpeech ? (
               <p className="dialogue-warning">
-                {"\u26A0\uFE0F"} Kailangan mong <strong>mag-log in</strong> para
+                {"\u26A0\uFE0F"} Kailangan mong <strong>pumasok</strong> para
                 makapaglaro sa iPhone o sa in-app browser. Bumalik sa simula at
-                pumasok gamit ang iyong username.
+                gamitin ang iyong pangalan ng gumagamit.
               </p>
             ) : platformUnsupported ? (
               <p className="dialogue-warning">

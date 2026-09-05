@@ -56,9 +56,10 @@ async function computeProgress(isGuest, uid) {
   };
 }
 
-/** Gender is stored in English ("Male"/"Female"/"Other") so existing
- *  student records keep working - only the display is Filipino. */
-const GENDER_LABELS = { Male: "Lalaki", Female: "Babae", Other: "Iba pa" };
+/** Gender is now stored in Filipino. Records created before that change
+ *  hold the old English values, so those are mapped on the way out;
+ *  anything already Filipino passes straight through. */
+const LEGACY_GENDER = { Male: "Lalaki", Female: "Babae", Other: "Iba pa" };
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -148,7 +149,7 @@ export default function Dashboard() {
           <div className="profile-info">
             <p><strong>Baitang:</strong> {profile.grade}</p>
             <p><strong>Seksyon:</strong> {profile.section}</p>
-            <p><strong>Kasarian:</strong> {GENDER_LABELS[profile.gender] || profile.gender}</p>
+            <p><strong>Kasarian:</strong> {LEGACY_GENDER[profile.gender] || profile.gender}</p>
           </div>
         </section>
 

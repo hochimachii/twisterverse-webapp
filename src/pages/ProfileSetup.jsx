@@ -22,7 +22,7 @@ export default function ProfileSetup() {
     e.preventDefault();
 
     if (!username) {
-      setError("No user found. Please log in again.");
+      setError("Walang nakitang gumagamit. Pumasok muli.");
       return;
     }
 
@@ -32,7 +32,7 @@ export default function ProfileSetup() {
     const profileData = { fullName, school, avatar, grade, section, gender };
 
     if (!isProfileComplete(profileData)) {
-      setError("Please complete all fields before continuing.");
+      setError("Punan ang lahat ng patlang bago magpatuloy.");
       return;
     }
 
@@ -120,9 +120,9 @@ export default function ProfileSetup() {
             required
           >
             <option value="">Piliin ang Kasarian</option>
-            <option value="Male">Lalaki</option>
-            <option value="Female">Babae</option>
-            <option value="Other">Iba pa</option>
+            <option value="Lalaki">Lalaki</option>
+            <option value="Babae">Babae</option>
+            <option value="Iba pa">Iba pa</option>
           </select>
 
           {error && <p className="error">{error}</p>}
