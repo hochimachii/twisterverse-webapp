@@ -155,7 +155,7 @@ function TwisterverseMap({ progress, selectedWorld, onSelectWorld }) {
 
 export default function StageSelection() {
   const navigate = useNavigate();
-  const { uid, isGuest } = useAuth();
+  const { uid } = useAuth();
   const [selectedWorld, setSelectedWorld] = useState(1);
   const [progress, setProgress] = useState({});
   const [newlyUnlocked, setNewlyUnlocked] = useState(null); // world object or null
@@ -165,7 +165,7 @@ export default function StageSelection() {
     let cancelled = false;
 
     (async () => {
-      const saved = await loadProgress(isGuest, uid);
+      const saved = await loadProgress(uid);
       if (cancelled) return;
       setProgress(saved);
 
@@ -185,7 +185,7 @@ export default function StageSelection() {
     return () => {
       cancelled = true;
     };
-  }, [isGuest, uid]);
+  }, [uid]);
 
   // Show each world's guide-greeting scene the first time it's viewed
   // this session (including world 1 on a brand-new visit).
@@ -232,17 +232,6 @@ export default function StageSelection() {
   return (
     <div className="stage-bg" style={{ backgroundImage: `url(${pageBg})` }}>
       <div className="stage-wrapper">
-        {isGuest && (
-          <div className="guest-banner">
-            <span className="guest-banner__icon" aria-hidden="true">
-              {"\u26A0\uFE0F"}
-            </span>
-            <span>
-              Naglalaro ka bilang Guest — hindi permanenteng naka-save ang
-              iyong progreso.
-            </span>
-          </div>
-        )}
 
         <h1>Mapa ng Twisterverse</h1>
 

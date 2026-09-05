@@ -36,7 +36,7 @@ const RECITE_SECONDS = 5;
 export default function TwisterActivity() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { username, uid, isGuest } = useAuth();
+  const { username, uid } = useAuth();
   const { world, level } = location.state || { world: 1, level: 1 };
 
   const worldData = getWorld(world);
@@ -46,10 +46,11 @@ export default function TwisterActivity() {
   // (iOS/Safari, Messenger/Facebook in-app browsers) record audio and
   // transcribe server-side instead.
   // Server transcription requires a signed-in user: the callable rejects
-  // anonymous callers so a paid endpoint isn't open to the whole internet.
-  // A guest therefore falls back to the browser recognizer, which still
-  // works fine on Android and desktop.
-  const signedIn = Boolean(uid) && !isGuest;
+  // anonymous callers so a paid endpoint isn't open to the whole
+  // internet. Every student is signed in now that guest mode is gone, so
+  // this is a guard against a call racing ahead of auth rather than a
+  // path anyone plays through - it falls back to the browser recognizer.
+  const signedIn = Boolean(uid);
   const useServerMode = needsServerTranscription() && signedIn;
   // Whether to run MediaRecorder ALONGSIDE the browser's speech
   // recognition, purely to capture audio for the Teacher Dashboard.
@@ -65,10 +66,10 @@ export default function TwisterActivity() {
   // plan). Say so honestly instead of letting them tap a mic button
   // that can't work and blaming their internet connection.
   const platformUnsupported = speechUnavailableOnPlatform();
-  // iOS and in-app browsers have NO browser recognizer to fall back to, so
-  // a guest there cannot play at all - the server is the only path and it
-  // needs an account. Say so plainly rather than letting the attempt fail
-  // as a misleading network error.
+  // iOS and in-app browsers have NO browser recognizer to fall back to,
+  // so without a signed-in account there is no way to play there at all -
+  // the server is the only path. Say so plainly rather than letting the
+  // attempt fail as a misleading network error.
   const needsLoginForSpeech =
     !signedIn && platformLacksBrowserSpeech() && FEATURES.serverTranscription;
 
@@ -279,9 +280,9 @@ export default function TwisterActivity() {
   );
 
   const saveProgress = async (points) => {
-    const prevCount = (await loadWorldProgress(isGuest, uid, world)).length;
-    await markLevelComplete(isGuest, uid, world, level, points);
-    const newCount = (await loadWorldProgress(isGuest, uid, world)).length;
+    const prevCount = (await loadWorldProgress(uid, world)).length;
+    await markLevelComplete(uid, world, level, points);
+    const newCount = (await loadWorldProgress(uid, world)).length;
     if (
       worldData &&
       prevCount < worldData.twisters.length &&

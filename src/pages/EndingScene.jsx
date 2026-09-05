@@ -99,7 +99,7 @@ const BEATS = [
 
 export default function EndingScene() {
   const navigate = useNavigate();
-  const { username, uid, isGuest, authLoading } = useAuth();
+  const { username, uid, authLoading } = useAuth();
   const [index, setIndex] = useState(0);
   // null while we are still waiting on auth to know WHOSE history to
   // check - rendering the first frame before that would flash the
@@ -138,7 +138,7 @@ export default function EndingScene() {
       return undefined;
     }
 
-    hasSeenEnding(isGuest, uid)
+    hasSeenEnding(uid)
       .then((seen) => {
         if (cancelled) return;
         if (seen) writeSeenCache(username);
@@ -154,7 +154,7 @@ export default function EndingScene() {
     return () => {
       cancelled = true;
     };
-  }, [authLoading, isGuest, uid, username]);
+  }, [authLoading, uid, username]);
 
   useEffect(() => {
     if (alreadySeen) navigate("/dashboard", { replace: true });
@@ -165,11 +165,11 @@ export default function EndingScene() {
   useEffect(() => {
     if (!isLast || authLoading) return;
     writeSeenCache(username);
-    markEndingSeen(isGuest, uid).catch(() => {
+    markEndingSeen(uid).catch(() => {
       // The device cache still holds it, so at worst the ending can
       // reappear on a different device later.
     });
-  }, [isLast, authLoading, isGuest, uid, username]);
+  }, [isLast, authLoading, uid, username]);
 
   const finish = () => navigate("/dashboard");
 

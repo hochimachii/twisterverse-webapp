@@ -232,40 +232,6 @@ body {
   box-shadow: 0 5px 0 var(--verse-teal-dark), 0 8px 14px rgba(31, 92, 77, 0.25);
 }
 
-/* ---------- Guest button — matching bevel treatment, green ---------- */
-.guest-block {
-  width: 100%;
-  margin-top: 4px;
-}
-
-.guest-btn {
-  width: 100%;
-  padding: 11px;
-  border-radius: 999px;
-  border: none;
-  background: linear-gradient(180deg, var(--guest-green) 0%, var(--guest-green-dark) 100%);
-  color: var(--text-light);
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  cursor: pointer;
-  box-shadow: 0 5px 0 #1f6b31, 0 8px 14px rgba(46, 143, 69, 0.3);
-  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
-}
-
-.guest-btn:hover { filter: brightness(1.05); }
-.guest-btn:active {
-  transform: translateY(3px);
-  box-shadow: 0 2px 0 #1f6b31, 0 4px 8px rgba(46, 143, 69, 0.25);
-}
-
-.guest-warning {
-  margin: 8px 2px 0;
-  font-size: 0.76rem;
-  line-height: 1.35;
-  color: rgba(255, 255, 255, 0.85);
-  text-align: center;
-}
-
 .teacher-login-link {
   margin-top: 6px;
   color: rgba(255, 255, 255, 0.7);

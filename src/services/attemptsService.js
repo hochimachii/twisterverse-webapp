@@ -5,8 +5,9 @@
 // the paid Blaze plan. Attempts are visible to a teacher on a
 // completely different device, which is the whole point.
 //
-// Guest attempts are never logged, consistent with guests not having
-// persistent progress either.
+// An attempt without a uid is never logged. Guest mode was removed at
+// the client's request, so this is now only a guard against a call
+// racing ahead of sign-in rather than a supported way to play.
 
 import { collection, addDoc, getDocs, query, where, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
@@ -32,10 +33,9 @@ export async function logAttempt({
   audioDataUrl
 }) {
   if (!uid) {
-    // Guests have no account, so nothing is logged for them — including
-    // recordings. If audio seems to be "missing", check you're signed in
-    // as a real student rather than using Continue as Guest.
-    console.log("[audio] guest session — attempt not logged");
+    // No account, so nothing is logged - including recordings. If audio
+    // seems to be "missing", check the student is actually signed in.
+    console.log("[audio] no signed-in user - attempt not logged");
     return;
   }
 

@@ -7,7 +7,6 @@ import {
   isProfileComplete
 } from "../services/userService";
 import { friendlyAuthError } from "../services/authService";
-import { useAuth } from "../context/AuthContext";
 import WelcomeOverlay from "../components/WelcomeOverlay";
 import "../styles/LoginPage.css";
 import backgroundImg from "../assets/login/background.PNG";
@@ -21,7 +20,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const { loginAsGuest } = useAuth();
 
   const clearError = () => setError("");
 
@@ -79,7 +77,7 @@ export default function LoginPage() {
         <main className="form-container" aria-labelledby="auth-heading">
           <form className="auth-form" onSubmit={handleAuth} noValidate>
             <h2 id="auth-heading" className="visually-hidden">
-              {isSignup ? "Sign up" : "Login"}
+              {isSignup ? "Gumawa ng Account" : "Mag-login"}
             </h2>
 
             <div className="form-group">
@@ -121,7 +119,9 @@ export default function LoginPage() {
               disabled={loading}
               aria-busy={loading}
             >
-              {loading ? (isSignup ? "Creating…" : "Signing in…") : (isSignup ? "Create Account" : "Enter")}
+              {loading
+                ? (isSignup ? "Ginagawa…" : "Pumapasok…")
+                : (isSignup ? "Gumawa ng Account" : "Pumasok")}
             </button>
 
             {error && (
@@ -132,7 +132,7 @@ export default function LoginPage() {
 
             <div className="form-footer">
               <p className="signup-text">
-                {isSignup ? "Already have an account?" : "New here?"}{" "}
+                {isSignup ? "May account ka na?" : "Bago ka dito?"}{" "}
                 <button
                   type="button"
                   className="link-btn"
@@ -141,29 +141,9 @@ export default function LoginPage() {
                     setError("");
                   }}
                 >
-                  {isSignup ? "Back to Login" : "Sign up"}
+                  {isSignup ? "Bumalik sa Pag-login" : "Gumawa ng Account"}
                 </button>
               </p>
-
-              {!isSignup && (
-                <div className="guest-block">
-                  <button
-                    type="button"
-                    className="guest-btn"
-                    onClick={() => {
-                      loginAsGuest("Guest");
-                      navigate("/dashboard");
-                    }}
-                  >
-                    Continue as Guest
-                  </button>
-                  <p className="guest-warning">
-                    {"\u26A0\uFE0F"} Bilang Guest, hindi permanenteng
-                    naka-save ang iyong progreso — mawawala ito kapag
-                    isinara ang browser.
-                  </p>
-                </div>
-              )}
 
               <button
                 type="button"

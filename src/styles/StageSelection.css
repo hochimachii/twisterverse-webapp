@@ -57,12 +57,6 @@
   );
 }
 
-/* Headings */
-.stage-wrapper .guest-banner {
-  width: 100%;
-  margin-bottom: 16px;
-}
-
 .stage-wrapper h1 {
   font-size: 1.9rem;
   font-weight: 800;

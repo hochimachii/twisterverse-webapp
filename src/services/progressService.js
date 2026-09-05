@@ -1,7 +1,11 @@
 // src/services/progressService.js
 //
-// Per-student progress in Firestore at progress/{uid}. Guests use
-// sessionStorage and never touch Firebase.
+// Per-student progress in Firestore at progress/{uid}.
+//
+// The sessionStorage path below is a defensive fallback for the brief
+// window before a uid is known - it is NOT a feature. Guest mode was
+// removed at the client's request, so in practice every caller has a
+// uid and progress always lands in Firestore.
 //
 // Shape: { world1: { levels: [1,2,3], points: { "1": 150, "2": 120 } } }
 // Older shape ({ world1: [1,2,3] }) is still read correctly — see
@@ -10,18 +14,18 @@
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 
-const GUEST_KEY = "progress";
+const LOCAL_KEY = "progress";
 
-function readGuestProgress() {
+function readLocalProgress() {
   try {
-    return JSON.parse(sessionStorage.getItem(GUEST_KEY)) || {};
+    return JSON.parse(sessionStorage.getItem(LOCAL_KEY)) || {};
   } catch {
     return {};
   }
 }
 
-function writeGuestProgress(data) {
-  sessionStorage.setItem(GUEST_KEY, JSON.stringify(data));
+function writeLocalProgress(data) {
+  sessionStorage.setItem(LOCAL_KEY, JSON.stringify(data));
 }
 
 /** Accepts either the old array shape or the new object shape. */
@@ -33,9 +37,9 @@ function normalizeWorld(value) {
   return { levels: [], points: {} };
 }
 
-export async function loadProgress(isGuest, uid) {
-  const raw = isGuest || !uid
-    ? readGuestProgress()
+export async function loadProgress(uid) {
+  const raw = !uid
+    ? readLocalProgress()
     : (await getDoc(doc(db, "progress", uid))).data() || {};
 
   const out = {};
@@ -54,38 +58,37 @@ export async function loadProgress(isGuest, uid) {
  *
  *  Lives on the progress document rather than in localStorage so it
  *  follows the ACCOUNT: a student who finishes on a classroom tablet
- *  does not get the ending again when they log in at home. Guests keep
- *  using sessionStorage, consistent with the rest of their progress.
+ *  does not get the ending again when they log in at home.
  *
  *  Reads are best-effort - if Firestore is unreachable the caller falls
  *  back to its local cache rather than blocking the student. */
-export async function hasSeenEnding(isGuest, uid) {
-  if (isGuest || !uid) return readGuestProgress().endingSeen === true;
+export async function hasSeenEnding(uid) {
+  if (!uid) return readLocalProgress().endingSeen === true;
   const snap = await getDoc(doc(db, "progress", uid));
   return snap.data()?.endingSeen === true;
 }
 
-export async function markEndingSeen(isGuest, uid) {
-  if (isGuest || !uid) {
-    const progress = readGuestProgress();
+export async function markEndingSeen(uid) {
+  if (!uid) {
+    const progress = readLocalProgress();
     progress.endingSeen = true;
-    writeGuestProgress(progress);
+    writeLocalProgress(progress);
     return;
   }
   // merge:true so this never disturbs the world entries alongside it.
   await setDoc(doc(db, "progress", uid), { endingSeen: true }, { merge: true });
 }
 
-export async function loadWorldProgress(isGuest, uid, worldId) {
-  const progress = await loadProgress(isGuest, uid);
+export async function loadWorldProgress(uid, worldId) {
+  const progress = await loadProgress(uid);
   return progress[`world${worldId}`]?.levels || [];
 }
 
 /** Marks a level complete and records its points (keeping the student's
  *  BEST score for that level, so replaying can improve but never lower
  *  what they already earned). */
-export async function markLevelComplete(isGuest, uid, worldId, level, points = 0) {
-  const progress = await loadProgress(isGuest, uid);
+export async function markLevelComplete(uid, worldId, level, points = 0) {
+  const progress = await loadProgress(uid);
   const key = `world${worldId}`;
   const entry = progress[key] || { levels: [], points: {} };
 
@@ -94,8 +97,8 @@ export async function markLevelComplete(isGuest, uid, worldId, level, points = 0
   entry.points[String(level)] = Math.max(previous, points);
   progress[key] = entry;
 
-  if (isGuest || !uid) {
-    writeGuestProgress(progress);
+  if (!uid) {
+    writeLocalProgress(progress);
   } else {
     await setDoc(doc(db, "progress", uid), progress);
   }

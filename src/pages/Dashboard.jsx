@@ -18,8 +18,8 @@ const RANK_TIERS = [
   { min: 0, label: "Baguhan" }
 ];
 
-async function computeProgress(isGuest, uid) {
-  const progress = await loadProgress(isGuest, uid);
+async function computeProgress(uid) {
+  const progress = await loadProgress(uid);
   const total = totalLevelCount();
 
   let completed = 0;
@@ -63,7 +63,7 @@ const LEGACY_GENDER = { Male: "Lalaki", Female: "Babae", Other: "Iba pa" };
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { username, uid, isGuest, logout } = useAuth();
+  const { username, uid, logout } = useAuth();
   const [profile, setProfile] = useState(null);
   const [stats, setStats] = useState(null);
 
@@ -84,7 +84,7 @@ export default function Dashboard() {
         return;
       }
 
-      const progressStats = await computeProgress(isGuest, uid);
+      const progressStats = await computeProgress(uid);
       if (cancelled) return;
 
       setProfile(userProfile);
@@ -94,7 +94,7 @@ export default function Dashboard() {
     return () => {
       cancelled = true;
     };
-  }, [username, uid, isGuest, navigate]);
+  }, [username, uid, navigate]);
 
   const handleSignOut = async () => {
     await logout();
@@ -118,17 +118,6 @@ export default function Dashboard() {
       style={{ backgroundImage: `url(${backgroundImg})` }}
     >
       <div className="dashboard-wrapper">
-        {isGuest && (
-          <div className="guest-banner dashboard-guest-banner">
-            <span className="guest-banner__icon" aria-hidden="true">
-              {"\u26A0\uFE0F"}
-            </span>
-            <span>
-              Naglalaro ka bilang Guest — hindi permanenteng naka-save ang
-              iyong progreso.
-            </span>
-          </div>
-        )}
 
         {/* HEADER SECTION */}
         <header className="dashboard-header">
@@ -225,14 +214,6 @@ export default function Dashboard() {
         <section className="main-actions">
           <button className="action-btn play-btn" onClick={() => navigate("/stages")}>
             {"\u25B6\uFE0F"} Maglaro
-          </button>
-          <button
-            className="action-btn settings-btn"
-            disabled
-            title="Malapit na — hindi pa available"
-          >
-            {"\u2699\uFE0F"} Mga Setting
-            <span className="coming-soon-badge">Malapit Na</span>
           </button>
         </section>
       </div>
