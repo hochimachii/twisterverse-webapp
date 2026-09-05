@@ -34,7 +34,7 @@ const STEPS = [
     icon: "\uD83D\uDC42",
     title: "Makinig muna",
     body:
-      "Babasahin ng kaibigan mo sa mundong ito ang tongue twister. Basahin at intindihin muna ito bago magsimula."
+      "Babasahin ng kaibigan mo sa mundong ito ang hamon sa pagbigkas. Basahin at intindihin muna ito bago magsimula."
   },
   {
     icon: "\uD83C\uDF99\uFE0F",
@@ -46,7 +46,7 @@ const STEPS = [
     icon: "\u23F1\uFE0F",
     title: "May 5 segundo ka",
     body:
-      "Bigkasin ang buong tongue twister nang mabilis at malinaw bago maubos ang oras. Kapag naubos ang oras, kailangan mong ulitin."
+      "Bigkasin ang buong pangungusap nang mabilis at malinaw bago maubos ang oras. Kapag naubos ang oras, kailangan mong ulitin."
   },
   {
     icon: "\u2B50",

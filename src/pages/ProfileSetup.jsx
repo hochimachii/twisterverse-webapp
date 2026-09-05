@@ -50,7 +50,7 @@ export default function ProfileSetup() {
       style={{ backgroundImage: `url(${backgroundImg})` }}
     >
       <div className="profile-wrapper">
-        <h2>Create Your Profile</h2>
+        <h2>Gawin ang Iyong Profile</h2>
         <form onSubmit={handleSubmit}>
           <input
             type="text"
@@ -62,13 +62,13 @@ export default function ProfileSetup() {
 
           {/* Avatar selection */}
           <div className="avatar-selection">
-            <p>Select an Avatar:</p>
+            <p>Pumili ng Avatar:</p>
             <div className="avatar-grid">
               {AVATAR_OPTIONS.map((a) => (
                 <img
                   key={a}
                   src={avatarSrc(a)}
-                  alt="avatar"
+                  alt="Avatar"
                   className={`avatar ${avatar === a ? "selected" : ""}`}
                   onClick={() => setAvatar(a)}
                 />
@@ -78,10 +78,10 @@ export default function ProfileSetup() {
 
           {/* Live preview */}
           <div className="profile-preview">
-            <h3>Preview</h3>
+            <h3>Napili Mo</h3>
             <img
               src={avatarSrc(avatar)}
-              alt="selected avatar"
+              alt="Napiling avatar"
               className="preview-avatar"
             />
             <p className="preview-nickname">{fullName || "Ang buong pangalan mo"}</p>
@@ -102,14 +102,14 @@ export default function ProfileSetup() {
 
           <input
             type="text"
-            placeholder="Grade Level"
+            placeholder="Baitang"
             value={grade}
             onChange={(e) => setGrade(e.target.value)}
             required
           />
           <input
             type="text"
-            placeholder="Section"
+            placeholder="Seksyon"
             value={section}
             onChange={(e) => setSection(e.target.value)}
             required
@@ -119,14 +119,14 @@ export default function ProfileSetup() {
             onChange={(e) => setGender(e.target.value)}
             required
           >
-            <option value="">Select Gender</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Other">Other</option>
+            <option value="">Piliin ang Kasarian</option>
+            <option value="Male">Lalaki</option>
+            <option value="Female">Babae</option>
+            <option value="Other">Iba pa</option>
           </select>
 
           {error && <p className="error">{error}</p>}
-          <button type="submit">Save Profile</button>
+          <button type="submit">I-save ang Profile</button>
         </form>
       </div>
     </div>

@@ -30,7 +30,7 @@ const BEATS = [
   {
     book: "closed",
     text:
-      "Kilala siya sa kanilang klase bilang batang mahilig maglaro ng mga salita at magbaluktot ng dila sa kahit anong tongue twister.",
+      "Kilala siya sa kanilang klase bilang batang mahilig maglaro ng mga salita at magbaluktot ng dila sa kahit anong mabilisang pagbigkas.",
     sprite: "neutral"
   },
   {

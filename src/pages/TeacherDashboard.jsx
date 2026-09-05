@@ -181,7 +181,7 @@ export default function TeacherDashboard() {
   if (!authChecked) {
     return (
       <div className="dashboard-bg dashboard-bg--loading" style={{ backgroundImage: `url(${backgroundImg})` }}>
-        <p className="loading-text">Checking session...</p>
+        <p className="loading-text">Sinusuri ang sesyon...</p>
       </div>
     );
   }
@@ -219,7 +219,7 @@ export default function TeacherDashboard() {
                   }}
                   className="teacher-select"
                 >
-                  <option value="">Lahat ng Grade</option>
+                  <option value="">Lahat ng Baitang</option>
                   {grades.map((g) => (
                     <option key={g} value={g}>{g}</option>
                   ))}
@@ -230,7 +230,7 @@ export default function TeacherDashboard() {
                   onChange={(e) => setSectionFilter(e.target.value)}
                   className="teacher-select"
                 >
-                  <option value="">Lahat ng Section</option>
+                  <option value="">Lahat ng Seksyon</option>
                   {sections.map((s) => (
                     <option key={s} value={s}>{s}</option>
                   ))}

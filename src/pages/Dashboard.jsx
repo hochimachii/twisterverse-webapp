@@ -56,6 +56,10 @@ async function computeProgress(isGuest, uid) {
   };
 }
 
+/** Gender is stored in English ("Male"/"Female"/"Other") so existing
+ *  student records keep working - only the display is Filipino. */
+const GENDER_LABELS = { Male: "Lalaki", Female: "Babae", Other: "Iba pa" };
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const { username, uid, isGuest, logout } = useAuth();
@@ -102,7 +106,7 @@ export default function Dashboard() {
         className="dashboard-bg dashboard-bg--loading"
         style={{ backgroundImage: `url(${backgroundImg})` }}
       >
-        <p className="loading-text">Loading profile...</p>
+        <p className="loading-text">Naglo-load ang profile...</p>
       </div>
     );
   }
@@ -137,14 +141,14 @@ export default function Dashboard() {
         <section className="profile-card">
           <img
             src={avatarSrc(profile.avatar)}
-            alt="avatar"
+            alt="Avatar"
             className="profile-avatar"
             
           />
           <div className="profile-info">
-            <p><strong>Grade:</strong> {profile.grade}</p>
-            <p><strong>Section:</strong> {profile.section}</p>
-            <p><strong>Gender:</strong> {profile.gender}</p>
+            <p><strong>Baitang:</strong> {profile.grade}</p>
+            <p><strong>Seksyon:</strong> {profile.section}</p>
+            <p><strong>Kasarian:</strong> {GENDER_LABELS[profile.gender] || profile.gender}</p>
           </div>
         </section>
 
@@ -165,15 +169,15 @@ export default function Dashboard() {
         {/* STATS PANEL */}
         <section className="stats-panel">
           <div className="stat-box">
-            <h3>XP / Points</h3>
+            <h3>XP / Puntos</h3>
             <p>{stats.xp}</p>
           </div>
           <div className="stat-box">
-            <h3>Achievements</h3>
+            <h3>Mga Tagumpay</h3>
             <p>{stats.worldsCompleted}/{stats.worldsTotal} Mundo</p>
           </div>
           <div className="stat-box">
-            <h3>Ranking</h3>
+            <h3>Ranggo</h3>
             <p>{stats.rank}</p>
           </div>
         </section>

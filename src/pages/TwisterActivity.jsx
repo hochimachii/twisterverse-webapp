@@ -639,7 +639,7 @@ export default function TwisterActivity() {
         </button>
         <div className="activity-empty">
           <h1>Wala pang laman dito</h1>
-          <p>Wala pang tongue twister para sa antas na ito.</p>
+          <p>Wala pang hamon para sa antas na ito.</p>
           <button className="back-btn" onClick={() => navigate("/stages")}>
             Bumalik sa Mundo
           </button>
