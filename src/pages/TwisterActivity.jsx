@@ -687,7 +687,7 @@ export default function TwisterActivity() {
               <p className="dialogue-warning">
                 {"\u26A0\uFE0F"} Kailangan mong <strong>pumasok</strong> para
                 makapaglaro sa iPhone o sa in-app browser. Bumalik sa simula at
-                gamitin ang iyong pangalan ng gumagamit.
+                gamitin ang iyong username.
               </p>
             ) : platformUnsupported ? (
               <p className="dialogue-warning">

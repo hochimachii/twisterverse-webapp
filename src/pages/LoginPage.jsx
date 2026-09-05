@@ -38,7 +38,7 @@ export default function LoginPage() {
     clearError();
 
     if (!username.trim() || !password) {
-      setError("Punan ang pangalan ng gumagamit at ang hudyat.");
+      setError("Punan ang username at ang password.");
       return;
     }
 
@@ -83,12 +83,12 @@ export default function LoginPage() {
             </h2>
 
             <div className="form-group">
-              <label htmlFor="username" className="visually-hidden">Pangalan ng Gumagamit</label>
+              <label htmlFor="username" className="visually-hidden">Username</label>
               <input
                 id="username"
                 name="username"
                 type="text"
-                placeholder="Pangalan ng Gumagamit"
+                placeholder="Username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 onFocus={clearError}
@@ -100,12 +100,12 @@ export default function LoginPage() {
 
             <div className="form-container form-container--regular"></div>
             <div className="form-group">
-              <label htmlFor="password" className="visually-hidden">Hudyat</label>
+              <label htmlFor="password" className="visually-hidden">Password</label>
               <input
                 id="password"
                 name="password"
                 type="password"
-                placeholder="Hudyat"
+                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onFocus={clearError}

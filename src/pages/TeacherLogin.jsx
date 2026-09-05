@@ -24,7 +24,7 @@ export default function TeacherLogin() {
     clearError();
 
     if (!username.trim() || !password) {
-      setError("Punan ang pangalan ng gumagamit at ang hudyat.");
+      setError("Punan ang username at ang password.");
       return;
     }
     if (isSignup && !name.trim()) {
@@ -109,11 +109,11 @@ export default function TeacherLogin() {
             )}
 
             <div className="form-group">
-              <label htmlFor="teacher-username" className="visually-hidden">Pangalan ng Gumagamit</label>
+              <label htmlFor="teacher-username" className="visually-hidden">Username</label>
               <input
                 id="teacher-username"
                 type="text"
-                placeholder="Pangalan ng Gumagamit"
+                placeholder="Username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 onFocus={clearError}
@@ -123,11 +123,11 @@ export default function TeacherLogin() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="teacher-password" className="visually-hidden">Hudyat</label>
+              <label htmlFor="teacher-password" className="visually-hidden">Password</label>
               <input
                 id="teacher-password"
                 type="password"
-                placeholder="Hudyat"
+                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onFocus={clearError}

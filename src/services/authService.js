@@ -54,13 +54,13 @@ export function getCurrentUser() {
 export function friendlyAuthError(err) {
   const code = err?.code || "";
   if (code.includes("invalid-credential") || code.includes("wrong-password") || code.includes("user-not-found")) {
-    return "Mali ang pangalan ng gumagamit o hudyat.";
+    return "Mali ang username o password.";
   }
   if (code.includes("email-already-in-use")) {
-    return "May gumagamit na ng pangalang ito.";
+    return "May gumagamit na ng username na ito.";
   }
   if (code.includes("weak-password")) {
-    return "Masyadong maikli ang hudyat (kailangan ng 6+ na karakter).";
+    return "Masyadong maikli ang password (kailangan ng 6+ na karakter).";
   }
   if (code.includes("network-request-failed")) {
     return "Walang koneksyon sa internet. Subukan ulit.";
