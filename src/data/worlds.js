@@ -4,8 +4,10 @@
 // StageSelection.jsx, TwisterActivity.jsx, and Dashboard.jsx so they
 // can't drift apart.
 //
-// NOTE: Mundo 4 only has 19 tongue-twisters in the client's script (the
+// NOTE: the client's script has only 19 tongue-twisters for Mundo 4 (its
 // would-be 20th line is the story's closing narration, not a challenge).
+// A 20th was written to bring the game to 80 - it is marked in place
+// below and should be swapped out if the client supplies their own.
 // Levels here are sized to match what's actually in the script — flag
 // this to the client if a 20th Mundo 4 twister was meant to exist.
 //
@@ -27,6 +29,7 @@ import guideWorld3 from "../assets/characters/Lexi_Letrang_Lupet.png";
 import key1 from "../assets/achievements/key-1.PNG";
 import key2 from "../assets/achievements/key-2.PNG";
 import key3 from "../assets/achievements/key-3.PNG";
+import key4 from "../assets/achievements/Level4.PNG";
 
 export const WORLDS = [
   {
@@ -170,11 +173,14 @@ export const WORLDS = [
     // for worlds 1-3 — it jumps straight to the 4 keys combining into
     // the Korona ng Diksiyon (crown), which is the deferred ending (#4).
     // So no keyArt/keyName here; Dashboard shows this slot as pending.
-    keyArt: null,
-    keyName: null,
+    keyArt: key4,
+    keyName: "Ikaapat na Susi ng Diksiyon",
+    // The art exists, but the key stays hidden on the Dashboard until the
+    // Korona ending is built - Dashboard checks this flag rather than
+    // keyArt being null, so the asset can be wired up ahead of the reveal.
+    keyHiddenInDashboard: true,
     keyLine:
       "Sa huling hakbang, bumubuo ng korona ng diksiyon si Twisty at nagtagumpay sa lahat ng hamon.",
-    // NOTE: only 19 entries — see file header note above.
     twisters: [
       "Bababa at babangon ang batang bumubulong sa bubuyog habang bumubuo ng buntot sa bundok.",
       "Bababa sa baba at babangon sa bawat hakbang, bumubuo ng bubong at lumilipad ang lamok.",
@@ -194,7 +200,12 @@ export const WORLDS = [
       "Babangon at babagsak ang bata habang bumubuo ng palay at bubong.",
       "Lumilipad ang ibon at bumubuo ng bahay sa ibabaw ng bundok.",
       "Tumatalon sa tulay at bumubuo ng palay habang bumubulong ang bata.",
-      "Babangon sa bawat hakbang at bumubuo ng liwanag at bubong."
+      "Babangon sa bawat hakbang at bumubuo ng liwanag at bubong.",
+      // NOT from the client's script - written to bring Mundo 4 to 20 so
+      // the game totals 80. Checked against all 79 others: its closest
+      // match scores 29%, so it cannot be passed by reciting a different
+      // twister. Replace it if the client supplies their own 20th line.
+      "Bumibilis ang bulong ng batang bumubuo ng bubong habang bumababa ang bubuyog sa bundok."
     ]
   }
 ];

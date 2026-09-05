@@ -188,7 +188,7 @@ export default function Dashboard() {
           <h3 className="keys-card__title">Mga Susi ng Diksiyon</h3>
           <div className="keys-row">
             {stats.keys.map(({ world, earned }) =>
-              world.keyArt ? (
+              world.keyArt && !world.keyHiddenInDashboard ? (
                 <div
                   key={world.id}
                   className={`key-slot ${earned ? "key-slot--earned" : "key-slot--locked"}`}
@@ -224,7 +224,7 @@ export default function Dashboard() {
         {/* MAIN ACTION */}
         <section className="main-actions">
           <button className="action-btn play-btn" onClick={() => navigate("/stages")}>
-            {"\u25B6\uFE0F"} Play
+            {"\u25B6\uFE0F"} Maglaro
           </button>
           <button
             className="action-btn settings-btn"
