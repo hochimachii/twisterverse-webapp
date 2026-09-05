@@ -231,7 +231,7 @@ export default function Dashboard() {
             disabled
             title="Malapit na — hindi pa available"
           >
-            {"\u2699\uFE0F"} Settings
+            {"\u2699\uFE0F"} Mga Setting
             <span className="coming-soon-badge">Malapit Na</span>
           </button>
         </section>
