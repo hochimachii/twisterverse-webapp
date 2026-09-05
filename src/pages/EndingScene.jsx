@@ -1,7 +1,41 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import endingArt from "../assets/twisty/ending_sequence.PNG";
 import "../styles/EndingScene.css";
+
+// The ending plays ONCE. Coming back to /ending afterwards drops the
+// student straight on their dashboard, where the keys, crown and
+// progress are what they actually want to look at again.
+//
+// Stored per username in localStorage, matching how the tutorial tracks
+// the same thing. That makes it per-device: a student who finishes on a
+// classroom tablet and logs in later at home would see it again. For a
+// once-per-story reward that is a reasonable trade, and it keeps the
+// completion moment from depending on a Firestore round-trip.
+const SEEN_KEY = "twisterverse_ending_seen";
+
+export function hasSeenEnding(username) {
+  try {
+    const seen = JSON.parse(localStorage.getItem(SEEN_KEY)) || [];
+    return seen.includes(username || "guest");
+  } catch {
+    return false;
+  }
+}
+
+export function markEndingSeen(username) {
+  try {
+    const seen = JSON.parse(localStorage.getItem(SEEN_KEY)) || [];
+    const key = username || "guest";
+    if (!seen.includes(key)) {
+      seen.push(key);
+      localStorage.setItem(SEEN_KEY, JSON.stringify(seen));
+    }
+  } catch {
+    // Storage unavailable (private mode) - the ending simply plays again.
+  }
+}
 
 // The closing sequence, shown once a student clears the final level of
 // Mundo 4. Until now that moment produced only a small card, which is a
@@ -61,7 +95,12 @@ const BEATS = [
 
 export default function EndingScene() {
   const navigate = useNavigate();
+  const { username, authLoading } = useAuth();
   const [index, setIndex] = useState(0);
+  // null while we are still waiting on auth to know WHOSE history to
+  // check - rendering the first frame before that would flash the
+  // cinematic at a student who has already earned it.
+  const [alreadySeen, setAlreadySeen] = useState(null);
   const timerRef = useRef(null);
 
   const beat = BEATS[index];
@@ -75,13 +114,36 @@ export default function EndingScene() {
   // read at their own pace should never be waiting on a timer.
   useEffect(() => {
     clearTimeout(timerRef.current);
+    // Don't start the clock until the scene is actually on screen. While
+    // auth is still resolving nothing is rendered, and a beat that spent
+    // its hold behind a blank screen would appear to flash past.
+    if (alreadySeen !== false) return undefined;
     if (beat.hold) {
       timerRef.current = setTimeout(advance, beat.hold);
     }
     return () => clearTimeout(timerRef.current);
-  }, [index, beat.hold, advance]);
+  }, [index, beat.hold, advance, alreadySeen]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    setAlreadySeen(hasSeenEnding(username));
+  }, [authLoading, username]);
+
+  useEffect(() => {
+    if (alreadySeen) navigate("/dashboard", { replace: true });
+  }, [alreadySeen, navigate]);
+
+  // Marked on reaching the final shot rather than on mount, so closing
+  // the tab halfway does not burn the one viewing.
+  useEffect(() => {
+    if (isLast && !authLoading) markEndingSeen(username);
+  }, [isLast, authLoading, username]);
 
   const finish = () => navigate("/dashboard");
+
+  // Undecided, or redirecting: render nothing rather than a frame that
+  // will be replaced.
+  if (alreadySeen !== false) return null;
 
   return (
     <div

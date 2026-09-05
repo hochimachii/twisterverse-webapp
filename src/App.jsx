@@ -23,6 +23,12 @@ function AppRoutes() {
   let musicSrc = "/music/background.mp3"; // login + profile
   if (location.pathname === "/dashboard") {
     musicSrc = "/music/dashboard.mp3"; // 🎵 dashboard track
+  } else if (location.pathname === "/ending") {
+    // The closing cinematic gets its own track. Routing it through the
+    // same MusicPlayer means it crossfades in, inherits the
+    // autoplay-blocked and background-pause handling, and crossfades
+    // back to the dashboard track on its own when the student leaves.
+    musicSrc = "/music/ending.mp3";
   }
 
   return (
