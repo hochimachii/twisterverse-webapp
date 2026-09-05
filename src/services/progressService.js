@@ -40,9 +40,40 @@ export async function loadProgress(isGuest, uid) {
 
   const out = {};
   Object.keys(raw).forEach((key) => {
-    out[key] = normalizeWorld(raw[key]);
+    // Only world entries get normalized. Anything else on the document
+    // is metadata (endingSeen) and has to pass through untouched:
+    // normalizeWorld would turn it into an empty world object, and
+    // markLevelComplete writes this whole object straight back, so the
+    // flag would be destroyed the next time the student cleared a level.
+    out[key] = key.startsWith("world") ? normalizeWorld(raw[key]) : raw[key];
   });
   return out;
+}
+
+/** Whether the student has already watched the closing cinematic.
+ *
+ *  Lives on the progress document rather than in localStorage so it
+ *  follows the ACCOUNT: a student who finishes on a classroom tablet
+ *  does not get the ending again when they log in at home. Guests keep
+ *  using sessionStorage, consistent with the rest of their progress.
+ *
+ *  Reads are best-effort - if Firestore is unreachable the caller falls
+ *  back to its local cache rather than blocking the student. */
+export async function hasSeenEnding(isGuest, uid) {
+  if (isGuest || !uid) return readGuestProgress().endingSeen === true;
+  const snap = await getDoc(doc(db, "progress", uid));
+  return snap.data()?.endingSeen === true;
+}
+
+export async function markEndingSeen(isGuest, uid) {
+  if (isGuest || !uid) {
+    const progress = readGuestProgress();
+    progress.endingSeen = true;
+    writeGuestProgress(progress);
+    return;
+  }
+  // merge:true so this never disturbs the world entries alongside it.
+  await setDoc(doc(db, "progress", uid), { endingSeen: true }, { merge: true });
 }
 
 export async function loadWorldProgress(isGuest, uid, worldId) {

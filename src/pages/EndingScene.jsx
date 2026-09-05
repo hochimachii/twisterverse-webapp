@@ -1,21 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { hasSeenEnding, markEndingSeen } from "../services/progressService";
 import endingArt from "../assets/twisty/ending_sequence.PNG";
 import "../styles/EndingScene.css";
 
-// The ending plays ONCE. Coming back to /ending afterwards drops the
-// student straight on their dashboard, where the keys, crown and
-// progress are what they actually want to look at again.
+// The ending plays ONCE PER ACCOUNT. Coming back to /ending afterwards
+// drops the student straight on their dashboard, where the keys, crown
+// and progress are what they actually want to look at again.
 //
-// Stored per username in localStorage, matching how the tutorial tracks
-// the same thing. That makes it per-device: a student who finishes on a
-// classroom tablet and logs in later at home would see it again. For a
-// once-per-story reward that is a reasonable trade, and it keeps the
-// completion moment from depending on a Firestore round-trip.
+// The authoritative flag lives on the progress document in Firestore
+// (see progressService), so it follows the student across devices - a
+// classroom tablet and a phone at home are the same account.
+//
+// localStorage is kept alongside it purely as a CACHE: it answers
+// instantly, so a student who has already watched the ending is
+// redirected without a blank screen while Firestore replies. It is
+// never the source of truth, and being empty only costs one read.
 const SEEN_KEY = "twisterverse_ending_seen";
 
-export function hasSeenEnding(username) {
+function readSeenCache(username) {
   try {
     const seen = JSON.parse(localStorage.getItem(SEEN_KEY)) || [];
     return seen.includes(username || "guest");
@@ -24,7 +28,7 @@ export function hasSeenEnding(username) {
   }
 }
 
-export function markEndingSeen(username) {
+function writeSeenCache(username) {
   try {
     const seen = JSON.parse(localStorage.getItem(SEEN_KEY)) || [];
     const key = username || "guest";
@@ -95,7 +99,7 @@ const BEATS = [
 
 export default function EndingScene() {
   const navigate = useNavigate();
-  const { username, authLoading } = useAuth();
+  const { username, uid, isGuest, authLoading } = useAuth();
   const [index, setIndex] = useState(0);
   // null while we are still waiting on auth to know WHOSE history to
   // check - rendering the first frame before that would flash the
@@ -125,9 +129,32 @@ export default function EndingScene() {
   }, [index, beat.hold, advance, alreadySeen]);
 
   useEffect(() => {
-    if (authLoading) return;
-    setAlreadySeen(hasSeenEnding(username));
-  }, [authLoading, username]);
+    if (authLoading) return undefined;
+    let cancelled = false;
+
+    // Cache hit: answer immediately, no network wait.
+    if (readSeenCache(username)) {
+      setAlreadySeen(true);
+      return undefined;
+    }
+
+    hasSeenEnding(isGuest, uid)
+      .then((seen) => {
+        if (cancelled) return;
+        if (seen) writeSeenCache(username);
+        setAlreadySeen(seen);
+      })
+      .catch(() => {
+        // Offline, or the read failed. Play it rather than withhold the
+        // reward - a rare repeat beats a student who finished eighty
+        // twisters being sent straight back to the dashboard.
+        if (!cancelled) setAlreadySeen(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, isGuest, uid, username]);
 
   useEffect(() => {
     if (alreadySeen) navigate("/dashboard", { replace: true });
@@ -136,8 +163,13 @@ export default function EndingScene() {
   // Marked on reaching the final shot rather than on mount, so closing
   // the tab halfway does not burn the one viewing.
   useEffect(() => {
-    if (isLast && !authLoading) markEndingSeen(username);
-  }, [isLast, authLoading, username]);
+    if (!isLast || authLoading) return;
+    writeSeenCache(username);
+    markEndingSeen(isGuest, uid).catch(() => {
+      // The device cache still holds it, so at worst the ending can
+      // reappear on a different device later.
+    });
+  }, [isLast, authLoading, isGuest, uid, username]);
 
   const finish = () => navigate("/dashboard");
 
