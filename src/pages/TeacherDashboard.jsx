@@ -3,6 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { getAllStudents, displayName } from "../services/userService";
 import { schoolName } from "../data/schools";
 import { getAllAttempts } from "../services/attemptsService";
+import {
+  buildSummaryCsv,
+  buildAttemptsCsv,
+  downloadCsv,
+  exportFilename
+} from "../utils/exportStudentData";
 import { getTeacherByUid } from "../services/teacherService";
 import { subscribeToAuthState, signOutUser } from "../services/authService";
 import { WORLDS, totalLevelCount } from "../data/worlds";
@@ -17,7 +23,7 @@ const TIER_LABELS = {
   close: { label: "Malapit na", className: "tier-badge--close" },
   fail: { label: "Mali", className: "tier-badge--fail" },
   timeout: { label: "Ubos ang Oras", className: "tier-badge--timeout" },
-  error: { label: "Mic Error", className: "tier-badge--fail" }
+  error: { label: "Problema sa Mic", className: "tier-badge--fail" }
 };
 
 function attemptTimeMs(a) {
@@ -155,6 +161,19 @@ export default function TeacherDashboard() {
     return [...new Set(pool.map((s) => s.profile.section).filter(Boolean))].sort();
   }, [students, gradeFilter]);
 
+  // Exports follow the CURRENT filters, so "Baitang 3 / Seksyon Mabini"
+  // on screen is exactly what lands in the spreadsheet. Exporting
+  // everything regardless would be a surprise, not a convenience.
+  const exportSummary = () => {
+    if (!filteredStudents.length) return;
+    downloadCsv(exportFilename("buod"), buildSummaryCsv(filteredStudents, allAttempts));
+  };
+
+  const exportAttempts = () => {
+    if (!filteredStudents.length) return;
+    downloadCsv(exportFilename("pagsubok"), buildAttemptsCsv(filteredStudents, allAttempts));
+  };
+
   const filteredStudents = useMemo(() => {
     const q = search.trim().toLowerCase();
     return students.filter((s) => {
@@ -198,7 +217,7 @@ export default function TeacherDashboard() {
             )}
           </h1>
           <button className="header-btn header-btn--signout" onClick={handleSignOut}>
-            {"\uD83D\uDEAA"} Sign Out
+            {"\uD83D\uDEAA"} Lumabas
           </button>
         </header>
 
@@ -244,6 +263,30 @@ export default function TeacherDashboard() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
+
+              <div className="teacher-export">
+                <button
+                  type="button"
+                  className="teacher-export__btn"
+                  onClick={exportSummary}
+                  disabled={!filteredStudents.length}
+                  title="Isang hanay bawat mag-aaral - para sa pagmamarka"
+                >
+                  {"\uD83D\uDCCA"} I-export ang Buod
+                </button>
+                <button
+                  type="button"
+                  className="teacher-export__btn teacher-export__btn--secondary"
+                  onClick={exportAttempts}
+                  disabled={!filteredStudents.length}
+                  title="Isang hanay bawat pagsubok - kasama ang narinig at ang link ng audio"
+                >
+                  {"\uD83D\uDCDD"} I-export ang mga Pagsubok
+                </button>
+                <span className="teacher-export__note">
+                  {filteredStudents.length} mag-aaral ang isasama
+                </span>
+              </div>
             </section>
 
             {/* STUDENT LIST */}

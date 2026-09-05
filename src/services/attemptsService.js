@@ -28,6 +28,7 @@ export async function logAttempt({
   transcript,
   similarity,
   tier,
+  points,
   audioDataUrl
 }) {
   if (!uid) {
@@ -62,6 +63,11 @@ export async function logAttempt({
     transcript,
     similarity,
     tier,
+    // TwisterActivity has always passed this; it was simply never
+    // destructured above, so every attempt was stored without its score.
+    // Older records have no points field - treat missing as unknown
+    // rather than zero when reading them back.
+    points: typeof points === "number" ? points : null,
     audioUrl,
     timestamp: serverTimestamp()
   });
