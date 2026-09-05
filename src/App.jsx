@@ -11,6 +11,7 @@ import OpeningScene from "./pages/OpeningScene";
 import Dashboard from "./pages/Dashboard";
 import StageSelection from "./pages/StageSelection";
 import TwisterActivity from "./pages/TwisterActivity";
+import EndingScene from "./pages/EndingScene";
 import TeacherLogin from "./pages/TeacherLogin";
 import TeacherDashboard from "./pages/TeacherDashboard";
 
@@ -38,13 +39,14 @@ function AppRoutes() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/stages" element={<StageSelection />} />
         <Route path="/activity" element={<TwisterActivity />} />
+        <Route path="/ending" element={<EndingScene />} />
 
         {/* Teacher flow — separate from student auth entirely */}
         <Route path="/teacher-login" element={<TeacherLogin />} />
         <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
 
         {/* Fallback */}
-        <Route path="*" element={<h1>404 - Page Not Found</h1>} />
+        <Route path="*" element={<h1>404 - Hindi natagpuan ang pahina</h1>} />
       </Routes>
     </>
   );

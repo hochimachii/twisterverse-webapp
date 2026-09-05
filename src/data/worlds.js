@@ -23,8 +23,7 @@ import bgKingdom from "../assets/stages/Background_3.PNG";
 import guideWorld1 from "../assets/characters/Bibo_berto_at_popoy_pato.PNG";
 import guideWorld2 from "../assets/characters/Tala_tinikling.PNG";
 import guideWorld3 from "../assets/characters/Lexi_Letrang_Lupet.png";
-// Mundo 4 (Haring Kiko Kwela) guide art not delivered yet — worldId 4
-// below has guideArt: null until it arrives.
+import guideWorld4 from "../assets/characters/Haring_Kiko_Kwela.PNG";
 
 import key1 from "../assets/achievements/key-1.PNG";
 import key2 from "../assets/achievements/key-2.PNG";
@@ -159,7 +158,7 @@ export const WORLDS = [
     id: 4,
     title: "Kaharian ng Huling Hamon",
     guide: "Haring Kiko Kwela",
-    guideArt: null, // not delivered yet
+    guideArt: guideWorld4,
     greeting: [
       {
         speaker: "Haring Kiko",

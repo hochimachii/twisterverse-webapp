@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
-import { getWorld } from "../data/worlds";
+import { getWorld, WORLDS } from "../data/worlds";
 import { useAuth } from "../context/AuthContext";
 import { markLevelComplete, loadWorldProgress } from "../services/progressService";
 import { logAttempt } from "../services/attemptsService";
@@ -287,7 +287,14 @@ export default function TwisterActivity() {
       prevCount < worldData.twisters.length &&
       newCount >= worldData.twisters.length
     ) {
-      setEarnedKey(worldData);
+      // Clearing the LAST world is the end of the story, so it goes to
+      // the closing cinematic instead of the small key card. Every other
+      // world still shows its key.
+      if (worldData.id === WORLDS[WORLDS.length - 1].id) {
+        navigate("/ending");
+      } else {
+        setEarnedKey(worldData);
+      }
     }
   };
 
