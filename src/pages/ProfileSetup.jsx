@@ -122,7 +122,6 @@ export default function ProfileSetup() {
             <option value="">Piliin ang Kasarian</option>
             <option value="Lalaki">Lalaki</option>
             <option value="Babae">Babae</option>
-            <option value="Iba pa">Iba pa</option>
           </select>
 
           {error && <p className="error">{error}</p>}
