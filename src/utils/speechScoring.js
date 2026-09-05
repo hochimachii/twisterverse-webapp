@@ -62,6 +62,25 @@ export function wordsMatch(a, b) {
   return charLevenshtein(pa, pb) <= tolerance;
 }
 
+/**
+ * Strict match used ONLY when comparing a MERGED pair of words.
+ *
+ * wordsMatch's edit tolerance is right for comparing one word to one
+ * word, but wrong once two words are joined: a long word could absorb a
+ * short neighbour within tolerance, so "lumilipad" matched
+ * "lumilipad" + "ang" and an omitted word cost nothing. In practice
+ * "Popoy pato ay pumapadyak sa putik" recited without the "sa" scored
+ * 100% "Perpekto".
+ *
+ * Genuine boundary noise joins to text that is phonetically IDENTICAL
+ * ("bibo" + "bumulong" == "bibobumulong"), so no tolerance is needed
+ * here to keep that working - and removing it stops omitted function
+ * words (sa, ng, at, ay, ang) from being free.
+ */
+function wordsMatchExact(a, b) {
+  return a === b || phoneticNormalize(a) === phoneticNormalize(b);
+}
+
 export function tokenizeWords(text) {
   return text
     .toLowerCase()
@@ -121,14 +140,14 @@ function alignmentDistance(originalWords, spokenWords) {
       if (i + 1 < m && j < n) {
         dp[i + 2][j + 1] = Math.min(
           dp[i + 2][j + 1],
-          cur + (wordsMatch(spokenWords[i] + spokenWords[i + 1], originalWords[j]) ? 0 : 2)
+          cur + (wordsMatchExact(spokenWords[i] + spokenWords[i + 1], originalWords[j]) ? 0 : 2)
         );
       }
       // one spoken word == two target words
       if (i < m && j + 1 < n) {
         dp[i + 1][j + 2] = Math.min(
           dp[i + 1][j + 2],
-          cur + (wordsMatch(spokenWords[i], originalWords[j] + originalWords[j + 1]) ? 0 : 2)
+          cur + (wordsMatchExact(spokenWords[i], originalWords[j] + originalWords[j + 1]) ? 0 : 2)
         );
       }
     }
