@@ -1,0 +1,578 @@
+/* TwisterActivity.css — Visual-novel scene layout
+   The world background fills the whole screen. Twisty stands directly on
+   it (no card around her), and a translucent dialogue box is docked to
+   the bottom for the twister line / feedback / controls — so the scene
+   art actually stays visible instead of being covered by a full card.
+*/
+
+/* Color palette now lives in theme.css (imported globally in App.jsx). */
+
+.activity-scene {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+/* Floating back button, top-left over the scene */
+.activity-back-btn {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  z-index: 20;
+  background: rgba(255, 250, 240, 0.9);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 2.5px solid var(--card-border);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 3px 0 var(--gold-dark), 0 5px 8px rgba(201, 143, 16, 0.25);
+  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
+}
+
+.activity-back-btn:hover { filter: brightness(1.05); }
+.activity-back-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--gold-dark), 0 2px 5px rgba(201, 143, 16, 0.2);
+}
+
+/* The guide stands here before an attempt, presenting the challenge.
+   Unlike Twisty's sprite, guide art is full-body, so no crop-hiding
+   trick is needed — she just stands naturally at the scene's base. */
+.activity-guide-standee {
+  position: relative;
+  z-index: 5;
+  align-self: flex-start;
+  margin-left: 6%;
+  width: clamp(140px, 40vw, 250px);
+  height: auto;
+  filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.35));
+  animation: guideStandeeIn 0.4s ease forwards;
+}
+
+@keyframes guideStandeeIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.activity-guide-standee--pending {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  margin-left: 6%;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 3px dashed rgba(255, 255, 255, 0.5);
+  font-size: 2.6rem;
+  margin-bottom: 12px;
+}
+
+.dialogue-speaker {
+  font-weight: 800;
+  color: var(--gold);
+}
+
+/* Twisty stands directly on the scene, like a visual-novel character
+   standee — no card, no background box */
+.twisty-standee {
+  position: relative;
+  z-index: 5;
+  align-self: flex-start;
+  margin-left: 6%;
+  width: clamp(140px, 42vw, 260px);
+  height: auto;
+  /* Pull her down behind the dialogue box so the cropped-off bottom of
+     the sprite is hidden by the box rather than leaving a gap that
+     reads as "floating". Percentage is relative to her own height, so
+     it scales consistently across screen sizes. */
+  transform: translateY(22%);
+  margin-bottom: 0;
+  filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.35));
+  transition: transform 0.25s ease;
+}
+
+.twisty-standee--listening {
+  animation: twistyListen 1s ease-in-out infinite;
+}
+
+@keyframes twistyListen {
+  0%, 100% { transform: translateY(22%) scale(1); }
+  50% { transform: translateY(14%) scale(1.03); }
+}
+
+.twisty-standee--happy { animation: twistyBounce 0.5s ease; }
+.twisty-standee--sad { transform: translateY(25%); }
+.twisty-standee--mad { animation: twistyShake 0.4s ease; }
+
+@keyframes twistyBounce {
+  0% { transform: translateY(30%) scale(0.9); }
+  60% { transform: translateY(10%) scale(1.08); }
+  100% { transform: translateY(22%) scale(1); }
+}
+
+@keyframes twistyShake {
+  0%, 100% { transform: translateY(22%) translateX(0); }
+  25% { transform: translateY(22%) translateX(-5px) rotate(-2deg); }
+  75% { transform: translateY(22%) translateX(5px) rotate(2deg); }
+}
+
+/* ---------- Dialogue box, docked to the bottom of the scene ---------- */
+.dialogue-box {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 640px;
+  align-self: center;
+  margin: 0 auto;
+  padding: 18px 22px 22px;
+  background: linear-gradient(
+    180deg,
+    rgba(59, 42, 30, 0.72) 0%,
+    rgba(40, 28, 20, 0.88) 100%
+  );
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-top: 4px solid var(--gold);
+  border-radius: 22px 22px 0 0;
+  color: #fff;
+  font-family: "Segoe UI", sans-serif;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35);
+}
+
+@media (min-width: 641px) {
+  .dialogue-box {
+    border-radius: 22px;
+    margin-bottom: 26px;
+    border: 3px solid var(--gold);
+    border-top: 3px solid var(--gold);
+  }
+}
+
+.dialogue-tag {
+  display: inline-block;
+  background: var(--gold);
+  color: var(--ink);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  padding: 4px 12px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+}
+
+.dialogue-text {
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 0 0 6px;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.dialogue-text--feedback {
+  font-size: 1.1rem;
+}
+
+.dialogue-sub {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 4px 0 0;
+}
+
+.dialogue-checking {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: rgba(79, 195, 201, 0.18);
+  border: 1.5px dashed var(--verse-teal);
+  border-radius: 12px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.dialogue-warning {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: rgba(244, 196, 48, 0.2);
+  border: 1.5px dashed var(--gold);
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #fff;
+}
+
+.dialogue-controls {
+  margin-top: 14px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Tint the dialogue box border by outcome, so the feedback reads even
+   before you finish it */
+.dialogue-box--pass,
+.dialogue-box--perfect {
+  border-color: var(--guest-green);
+}
+.dialogue-box--close {
+  border-color: var(--gold);
+}
+.dialogue-box--fail,
+.dialogue-box--error {
+  border-color: var(--twister-red);
+}
+.dialogue-box--timeout {
+  border-color: var(--twister-orange);
+}
+
+/* ---------- Buttons ---------- */
+.mic-btn {
+  background: linear-gradient(180deg, var(--verse-teal) 0%, var(--verse-teal-dark) 100%);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 22px;
+  font-size: 0.98rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 5px 0 var(--verse-teal-dark), 0 8px 14px rgba(31, 92, 77, 0.35);
+  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
+}
+
+.mic-btn:hover { filter: brightness(1.05); }
+.mic-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 var(--verse-teal-dark), 0 4px 8px rgba(31, 92, 77, 0.3);
+}
+
+.mic-btn--stop {
+  background: linear-gradient(180deg, var(--twister-orange) 0%, var(--twister-red) 100%);
+  box-shadow: 0 5px 0 #7a2013, 0 8px 14px rgba(181, 48, 31, 0.35);
+}
+.mic-btn--stop:active {
+  box-shadow: 0 2px 0 #7a2013, 0 4px 8px rgba(181, 48, 31, 0.3);
+}
+
+/* 5-second recitation countdown, shown while listening */
+.recite-timer {
+  position: relative;
+  width: 100%;
+  height: 22px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.recite-timer__bar {
+  position: absolute;
+  inset: 0;
+  right: auto;
+  background: linear-gradient(90deg, var(--verse-teal), #7fe0d6);
+  transition: width 1s linear, background 0.3s ease;
+}
+
+.recite-timer__bar--urgent {
+  background: linear-gradient(90deg, var(--twister-red), var(--twister-orange));
+}
+
+.recite-timer__label {
+  position: relative;
+  z-index: 1;
+  margin: 0 auto;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.recording-indicator {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.75);
+  animation: recordingBlink 1.4s ease-in-out infinite;
+}
+
+@keyframes recordingBlink {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.dialogue-controls button {
+  background: linear-gradient(180deg, var(--guest-green) 0%, var(--guest-green-dark) 100%);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 11px 18px;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #1f6b31, 0 6px 10px rgba(46, 143, 69, 0.3);
+  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
+}
+
+.dialogue-controls button:hover { filter: brightness(1.05); }
+.dialogue-controls button:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #1f6b31, 0 2px 6px rgba(46, 143, 69, 0.25);
+}
+
+.dialogue-controls button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.dialogue-controls button.secondary {
+  background: linear-gradient(180deg, var(--verse-teal) 0%, var(--verse-teal-dark) 100%);
+  box-shadow: 0 4px 0 #143f34, 0 6px 10px rgba(31, 92, 77, 0.3);
+}
+.dialogue-controls button.secondary:active {
+  box-shadow: 0 1px 0 #143f34, 0 2px 6px rgba(31, 92, 77, 0.25);
+}
+
+.dialogue-controls button.retry-btn {
+  background: linear-gradient(180deg, var(--twister-orange) 0%, var(--twister-red) 100%);
+  box-shadow: 0 4px 0 #7a2013, 0 6px 10px rgba(181, 48, 31, 0.3);
+}
+.dialogue-controls button.retry-btn:active {
+  box-shadow: 0 1px 0 #7a2013, 0 2px 6px rgba(181, 48, 31, 0.25);
+}
+
+/* ---------- Empty state (missing twister data) ---------- */
+.activity-empty {
+  align-self: center;
+  margin: auto;
+  text-align: center;
+  max-width: 420px;
+  background: rgba(255, 250, 240, 0.92);
+  border: 3px solid var(--gold);
+  border-radius: 20px;
+  padding: 26px 22px;
+  color: var(--ink);
+}
+
+.activity-empty h1 {
+  margin-bottom: 10px;
+  color: var(--twister-red);
+  font-size: 1.3rem;
+}
+
+.activity-empty p {
+  color: var(--ink-soft);
+  margin-bottom: 18px;
+}
+
+.back-btn {
+  background: linear-gradient(180deg, #b9a89a 0%, #8a7565 100%);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 26px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #5f4e40, 0 6px 10px rgba(95, 78, 64, 0.3);
+  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
+}
+
+.back-btn:hover { filter: brightness(1.06); }
+.back-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #5f4e40, 0 2px 6px rgba(95, 78, 64, 0.25);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 480px) {
+  .dialogue-box { padding: 16px 18px 20px; }
+  .dialogue-text { font-size: 1.02rem; }
+  .twisty-standee { width: clamp(120px, 46vw, 200px); }
+}
+
+/* ---------- Key-earned / world-complete celebration ---------- */
+.key-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 15, 10, 0.6);
+  backdrop-filter: blur(3px);
+  padding: 16px;
+  animation: keyFadeIn 0.35s ease forwards;
+}
+
+@keyframes keyFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.key-card {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  background: var(--card-bg, rgba(255, 250, 240, 0.95));
+  border: 3px solid var(--gold);
+  border-radius: 24px;
+  padding: 30px 24px 26px;
+  text-align: center;
+  overflow: hidden;
+  box-shadow: 0 18px 40px rgba(20, 15, 10, 0.45);
+  animation: keyPop 0.5s cubic-bezier(0.22, 1.4, 0.36, 1) forwards;
+  color: var(--ink);
+}
+
+@keyframes keyPop {
+  0% { transform: scale(0.8) rotate(-3deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.key-card__stripe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 7px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--twister-red) 0 12%,
+    var(--gold) 12% 24%,
+    var(--verse-teal) 24% 36%,
+    #4a90e2 36% 48%
+  );
+}
+
+.key-card__art {
+  width: clamp(90px, 28vw, 130px);
+  height: auto;
+  margin: 6px auto 12px;
+  filter: drop-shadow(0 10px 14px rgba(201, 143, 16, 0.5));
+  animation: keyArtSpin 0.7s ease;
+}
+
+.key-card__art--twisty {
+  filter: drop-shadow(0 10px 14px rgba(20, 15, 10, 0.35));
+}
+
+@keyframes keyArtSpin {
+  0% { transform: scale(0.5) rotate(-30deg); opacity: 0; }
+  70% { transform: scale(1.1) rotate(8deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+.key-card h2 {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--twister-red);
+}
+
+.key-card__name {
+  font-weight: 700;
+  color: var(--verse-teal-dark);
+  margin: 0 0 10px;
+}
+
+.key-card__line {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  line-height: 1.4;
+  margin: 0 0 18px;
+}
+
+.key-card button {
+  background: linear-gradient(180deg, var(--verse-teal) 0%, var(--verse-teal-dark) 100%);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 26px;
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: 0 5px 0 var(--verse-teal-dark), 0 8px 14px rgba(31, 92, 77, 0.35);
+  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
+}
+
+.key-card button:hover { filter: brightness(1.05); }
+.key-card button:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 var(--verse-teal-dark), 0 4px 8px rgba(31, 92, 77, 0.3);
+}
+
+/* ---------- Diagnostics panel (only renders with ?debug=1) ---------- */
+.activity-debug {
+  position: absolute;
+  top: 64px;
+  left: 10px;
+  right: 10px;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.82);
+  color: #7fe0d6;
+  font-family: monospace;
+  font-size: 11px;
+  line-height: 1.45;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #4fc3c9;
+  max-height: 45vh;
+  overflow-y: auto;
+  word-break: break-word;
+}
+
+.activity-debug hr {
+  border: none;
+  border-top: 1px solid rgba(127, 224, 214, 0.3);
+  margin: 6px 0;
+}
+
+/* ---------- Score breakdown (shown after a successful attempt) ---------- */
+.score-breakdown {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: rgba(88, 194, 109, 0.16);
+  border: 2px solid var(--guest-green);
+  border-radius: 14px;
+  text-align: center;
+}
+
+.score-breakdown__stars {
+  font-size: 1.3rem;
+  letter-spacing: 3px;
+  margin-bottom: 2px;
+}
+
+.score-breakdown__total {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #b7f4c6;
+  margin-bottom: 6px;
+}
+
+.score-breakdown__rows {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 12px;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.score-penalty {
+  color: #ffb3a7;
+}

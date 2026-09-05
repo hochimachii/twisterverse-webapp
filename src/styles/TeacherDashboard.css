@@ -1,0 +1,349 @@
+/* TeacherDashboard.css — reuses Dashboard.css's background/header/
+   card language (same background.PNG, same gold-bordered frosted
+   cards) and adds the filter bar, student list, and attempt-history
+   detail overlay specific to this screen.
+*/
+
+.teacher-wrapper {
+  max-width: 720px;
+}
+
+/* FILTERS + SEARCH */
+.teacher-filters {
+  background: var(--card-bg);
+  backdrop-filter: blur(8px) saturate(1.1);
+  -webkit-backdrop-filter: blur(8px) saturate(1.1);
+  border: 3px solid var(--card-border);
+  border-radius: 20px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.teacher-filters__row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.teacher-select {
+  flex: 1;
+  min-width: 130px;
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 2px solid rgba(74, 51, 36, 0.2);
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.teacher-search {
+  width: 100%;
+  padding: 11px 16px;
+  border-radius: 999px;
+  border: 2px solid rgba(74, 51, 36, 0.2);
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--ink);
+  font-size: 0.95rem;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.teacher-search:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(244, 196, 48, 0.25);
+}
+
+/* STUDENT LIST */
+.teacher-student-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.teacher-empty {
+  text-align: center;
+  color: var(--ink-soft);
+  font-weight: 600;
+  padding: 18px;
+}
+
+.teacher-student-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  background: var(--card-bg);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 2.5px solid var(--card-border);
+  border-radius: 16px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: transform 0.08s ease, box-shadow 0.15s ease;
+  box-shadow: 0 4px 10px rgba(20, 15, 10, 0.15);
+}
+
+.teacher-student-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(20, 15, 10, 0.2);
+}
+
+.teacher-student-card__avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.teacher-student-card__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.teacher-student-card__name {
+  font-weight: 800;
+  color: var(--ink);
+  font-size: 0.98rem;
+}
+
+.teacher-student-card__meta {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+
+.teacher-student-card__stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.teacher-student-card__percent {
+  font-weight: 800;
+  color: var(--verse-teal-dark);
+  font-size: 1rem;
+}
+
+.teacher-student-card__fails {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--twister-red);
+}
+
+/* STUDENT DETAIL OVERLAY */
+.teacher-detail-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(20, 15, 10, 0.6);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px 14px;
+  overflow-y: auto;
+}
+
+.teacher-detail {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  background: rgba(255, 250, 240, 0.97);
+  border: 3px solid var(--gold);
+  border-radius: 22px;
+  padding: 24px 20px;
+  box-shadow: 0 18px 40px rgba(20, 15, 10, 0.4);
+}
+
+.teacher-detail__close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: rgba(120, 110, 100, 0.15);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 1rem;
+  cursor: pointer;
+  color: var(--ink);
+}
+
+.teacher-detail__header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.teacher-detail__avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 3px solid var(--gold);
+  object-fit: cover;
+}
+
+.teacher-detail__header h2 {
+  margin: 0;
+  color: var(--twister-red);
+  font-size: 1.2rem;
+}
+
+.teacher-detail__meta {
+  margin: 2px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+
+.teacher-detail__summary {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.teacher-detail__stat {
+  flex: 1;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.6);
+  border: 2px dashed var(--gold);
+  border-radius: 14px;
+  padding: 10px 6px;
+}
+
+.teacher-detail__stat-value {
+  display: block;
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--ink);
+}
+
+.teacher-detail__stat-label {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--ink-soft);
+  margin-top: 2px;
+}
+
+.teacher-detail__history-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--verse-teal-dark);
+  margin: 0 0 10px;
+}
+
+.teacher-attempt-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.teacher-attempt {
+  background: rgba(255, 255, 255, 0.6);
+  border: 2px solid rgba(74, 51, 36, 0.15);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+
+.teacher-attempt__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.teacher-attempt__location {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--ink);
+}
+
+.tier-badge {
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 999px;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.tier-badge--perfect,
+.tier-badge--pass {
+  background: var(--guest-green-dark);
+}
+
+.tier-badge--close {
+  background: var(--gold-dark);
+}
+
+.tier-badge--fail {
+  background: var(--twister-red);
+}
+
+.tier-badge--timeout {
+  background: var(--twister-orange);
+}
+
+.teacher-attempt__twister,
+.teacher-attempt__transcript {
+  margin: 4px 0;
+  font-size: 0.85rem;
+  color: var(--ink);
+}
+
+.teacher-attempt__footer {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.teacher-attempt__time {
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+}
+
+.teacher-attempt__audio {
+  height: 32px;
+  max-width: 220px;
+}
+
+.teacher-attempt__no-audio {
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+@media (max-width: 480px) {
+  .teacher-detail { padding: 20px 16px; }
+  .teacher-detail__summary { flex-direction: column; }
+}
+
+/* School the teacher belongs to — they only see students from it. */
+.teacher-school-tag {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--verse-teal-dark);
+  background: rgba(79, 195, 201, 0.18);
+  border-radius: 999px;
+  padding: 2px 10px;
+  margin-top: 4px;
+  width: fit-content;
+}

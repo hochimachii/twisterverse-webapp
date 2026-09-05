@@ -1,0 +1,49 @@
+/* theme.css — single source of truth for the fiesta color palette.
+   Imported once in App.jsx so every page shares these :root variables
+   instead of each page CSS file redeclaring its own copy (which is how
+   ProfileSetup's .error rule silently drifted earlier in this project).
+
+   Individual page CSS files should NOT redeclare a :root block —
+   just use var(--name) and rely on this file being loaded globally.
+*/
+
+:root {
+  --ink: #3b2a1e;
+  --ink-soft: #6e5340;
+  --card-bg: rgba(255, 250, 240, 0.9);
+  --card-border: #f4c430;
+
+  --twister-orange: #ff8a5c;
+  --twister-red: #b5301f;
+  --verse-teal: #4fc3c9;
+  --verse-teal-dark: #1f5c4d;
+  --gold: #f4c430;
+  --gold-dark: #c98f10;
+  --guest-green: #58c26d;
+  --guest-green-dark: #2e8f45;
+
+  --text-light: #ffffff;
+  --text-dark: #111827;
+}
+
+/* Shared guest-mode warning banner — used on LoginPage, StageSelection,
+   and Dashboard wherever a guest session needs a visible reminder that
+   nothing is being permanently saved. */
+.guest-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(244, 196, 48, 0.18);
+  border: 2px dashed var(--gold-dark);
+  border-radius: 14px;
+  padding: 10px 14px;
+  color: var(--ink);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.guest-banner__icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}

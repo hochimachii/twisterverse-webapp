@@ -1,0 +1,134 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { saveUserProfile, isProfileComplete } from "../services/userService";
+import { useAuth } from "../context/AuthContext";
+import "../styles/ProfileSetup.css";
+import backgroundImg from "../assets/login/background.PNG";
+import { avatarSrc, AVATAR_OPTIONS } from "../data/avatars";
+import { SCHOOLS } from "../data/schools";
+
+export default function ProfileSetup() {
+  const { uid, username } = useAuth();
+  const [fullName, setFullName] = useState("");
+  const [school, setSchool] = useState("");
+  const [avatar, setAvatar] = useState(AVATAR_OPTIONS[0]);
+  const [grade, setGrade] = useState("");
+  const [section, setSection] = useState("");
+  const [gender, setGender] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!username) {
+      setError("No user found. Please log in again.");
+      return;
+    }
+
+    // fullName replaces the old nickname: teachers need to identify
+    // real students on their roster. school scopes which teacher can
+    // see this student.
+    const profileData = { fullName, school, avatar, grade, section, gender };
+
+    if (!isProfileComplete(profileData)) {
+      setError("Please complete all fields before continuing.");
+      return;
+    }
+
+    try {
+      await saveUserProfile(uid, profileData);
+      navigate("/intro");
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  return (
+    <div
+      className="profile-bg"
+      style={{ backgroundImage: `url(${backgroundImg})` }}
+    >
+      <div className="profile-wrapper">
+        <h2>Create Your Profile</h2>
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            placeholder="Buong Pangalan"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            required
+          />
+
+          {/* Avatar selection */}
+          <div className="avatar-selection">
+            <p>Select an Avatar:</p>
+            <div className="avatar-grid">
+              {AVATAR_OPTIONS.map((a) => (
+                <img
+                  key={a}
+                  src={avatarSrc(a)}
+                  alt="avatar"
+                  className={`avatar ${avatar === a ? "selected" : ""}`}
+                  onClick={() => setAvatar(a)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Live preview */}
+          <div className="profile-preview">
+            <h3>Preview</h3>
+            <img
+              src={avatarSrc(avatar)}
+              alt="selected avatar"
+              className="preview-avatar"
+            />
+            <p className="preview-nickname">{fullName || "Ang buong pangalan mo"}</p>
+          </div>
+
+          <select
+            value={school}
+            onChange={(e) => setSchool(e.target.value)}
+            required
+          >
+            <option value="">Piliin ang Paaralan</option>
+            {SCHOOLS.map((sc) => (
+              <option key={sc.id} value={sc.id}>
+                {sc.name}
+              </option>
+            ))}
+          </select>
+
+          <input
+            type="text"
+            placeholder="Grade Level"
+            value={grade}
+            onChange={(e) => setGrade(e.target.value)}
+            required
+          />
+          <input
+            type="text"
+            placeholder="Section"
+            value={section}
+            onChange={(e) => setSection(e.target.value)}
+            required
+          />
+          <select
+            value={gender}
+            onChange={(e) => setGender(e.target.value)}
+            required
+          >
+            <option value="">Select Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+
+          {error && <p className="error">{error}</p>}
+          <button type="submit">Save Profile</button>
+        </form>
+      </div>
+    </div>
+  );
+}

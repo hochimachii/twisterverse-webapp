@@ -1,0 +1,510 @@
+/* StageSelection.css — Fiesta theme
+   Page background swaps per selected world (city/island/forest/kingdom
+   art from the client). UI chrome stays consistent with Login/Dashboard/
+   ProfileSetup: frosted cream card, gold border, bevel buttons.
+*/
+
+/* Color palette now lives in theme.css (imported globally in App.jsx).
+   Only this page's slightly different card opacity stays local. */
+:root {
+  --card-bg: rgba(255, 250, 240, 0.88);
+}
+
+.stage-bg {
+  min-height: 100vh;
+  width: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  justify-content: center;
+  padding: 28px 16px 40px;
+  transition: background-image 0.4s ease;
+}
+
+.stage-wrapper {
+  width: 100%;
+  max-width: 760px;
+  background: var(--card-bg);
+  backdrop-filter: blur(10px) saturate(1.15);
+  -webkit-backdrop-filter: blur(10px) saturate(1.15);
+  border: 3px solid var(--card-border);
+  border-radius: 26px;
+  padding: 26px 22px 24px;
+  box-shadow: 0 14px 0 -6px rgba(74, 51, 36, 0.16), 0 18px 30px rgba(20, 15, 10, 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--ink);
+  font-family: "Segoe UI", sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+.stage-wrapper::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 7px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--twister-red) 0 12%,
+    var(--gold) 12% 24%,
+    var(--verse-teal) 24% 36%,
+    #4a90e2 36% 48%
+  );
+}
+
+/* Headings */
+.stage-wrapper .guest-banner {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.stage-wrapper h1 {
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: var(--twister-red);
+  margin: 6px 0 20px;
+  text-align: center;
+}
+
+.stage-wrapper h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--verse-teal-dark);
+  margin: 26px 0 14px;
+  text-align: center;
+}
+
+.world-guide {
+  font-weight: 500;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+/* Level grid */
+.level-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+/* Level cards */
+.level-card {
+  background: linear-gradient(180deg, var(--twister-orange) 0%, #e8683f 100%);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 4px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #a8431f, 0 6px 10px rgba(168, 67, 31, 0.3);
+  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
+  width: 100%;
+  text-align: center;
+}
+
+.level-card:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.level-card:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #a8431f, 0 2px 6px rgba(168, 67, 31, 0.25);
+}
+
+.level-card.completed {
+  background: linear-gradient(180deg, #7fe0a0 0%, var(--verse-teal-dark) 100%);
+  box-shadow: 0 4px 0 #143f34, 0 6px 10px rgba(31, 92, 77, 0.3);
+}
+
+/* Locked level cards: flat muted style (no cover art on these) */
+.level-card.locked {
+  background: rgba(120, 110, 100, 0.35) !important;
+  color: rgba(59, 42, 30, 0.55) !important;
+  border-color: rgba(120, 110, 100, 0.4) !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+}
+
+/* Back button */
+.back-btn {
+  margin-top: 30px;
+  background: linear-gradient(180deg, #b9a89a 0%, #8a7565 100%);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 26px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #5f4e40, 0 6px 10px rgba(95, 78, 64, 0.3);
+  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
+}
+
+.back-btn:hover { filter: brightness(1.06); }
+.back-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #5f4e40, 0 2px 6px rgba(95, 78, 64, 0.25);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .stage-wrapper { padding: 20px 16px 18px; }
+  .stage-wrapper h1 { font-size: 1.5rem; }
+  .level-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ---------- New-world-unlocked celebration ---------- */
+.unlock-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 15, 10, 0.55);
+  backdrop-filter: blur(3px);
+  padding: 16px;
+  animation: unlockFadeIn 0.35s ease forwards;
+}
+
+@keyframes unlockFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.unlock-card {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  background: var(--card-bg);
+  border: 3px solid var(--gold);
+  border-radius: 24px;
+  padding: 30px 24px 26px;
+  text-align: center;
+  overflow: hidden;
+  box-shadow: 0 18px 40px rgba(20, 15, 10, 0.4);
+  animation: unlockPop 0.45s cubic-bezier(0.22, 1.4, 0.36, 1) forwards;
+}
+
+@keyframes unlockPop {
+  0% { transform: scale(0.85); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.unlock-card__stripe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 7px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--twister-red) 0 12%,
+    var(--gold) 12% 24%,
+    var(--verse-teal) 24% 36%,
+    #4a90e2 36% 48%
+  );
+}
+
+.unlock-card__icon {
+  font-size: 2.6rem;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.unlock-card h2 {
+  margin: 4px 0 10px;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--twister-red);
+}
+
+.unlock-card__title {
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 4px;
+}
+
+.unlock-card__guide {
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  margin: 0 0 18px;
+}
+
+.unlock-card button {
+  background: linear-gradient(180deg, var(--verse-teal) 0%, var(--verse-teal-dark) 100%);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 24px;
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: 0 5px 0 var(--verse-teal-dark), 0 8px 14px rgba(31, 92, 77, 0.35);
+  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
+}
+
+.unlock-card button:hover { filter: brightness(1.05); }
+.unlock-card button:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 var(--verse-teal-dark), 0 4px 8px rgba(31, 92, 77, 0.3);
+}
+
+/* ---------- Twisterverse Map (interactive world selection) ---------- */
+.twisterverse-map {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.twisterverse-map__svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+/* foreignObject content wrapper */
+.map-node-wrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.map-node {
+  position: relative;
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--gold);
+  border: 4px solid var(--gold);
+  box-shadow: 0 5px 0 var(--gold-dark), 0 8px 14px rgba(201, 143, 16, 0.35);
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  padding: 0;
+}
+
+.map-node:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.map-node:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 var(--gold-dark), 0 4px 8px rgba(201, 143, 16, 0.3);
+}
+
+.map-node__overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(20, 15, 10, 0) 55%, rgba(20, 15, 10, 0.45) 100%);
+}
+
+.map-node__icon {
+  position: relative;
+  z-index: 1;
+  font-size: 1.9rem;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
+}
+
+.map-node__check {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  z-index: 2;
+  font-size: 1.1rem;
+  background: #fff;
+  border-radius: 50%;
+  line-height: 1;
+  padding: 2px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.map-node--active {
+  border-color: var(--verse-teal);
+  box-shadow: 0 0 0 5px rgba(79, 195, 201, 0.4), 0 5px 0 var(--verse-teal-dark),
+    0 8px 14px rgba(31, 92, 77, 0.35);
+  animation: mapNodePulse 1.6s ease-in-out infinite;
+}
+
+@keyframes mapNodePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+.map-node--completed {
+  border-color: var(--guest-green-dark);
+}
+
+.map-node--locked {
+  background-color: rgba(120, 110, 100, 0.35);
+  border-color: rgba(120, 110, 100, 0.55);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.map-node--locked .map-node__icon {
+  opacity: 0.75;
+}
+
+.map-node__label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--twister-red);
+  background: rgba(255, 250, 240, 0.85);
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  text-shadow: none;
+}
+
+.map-node__label--locked {
+  color: var(--ink-soft);
+}
+
+@media (max-width: 480px) {
+  .map-node { width: 66px; height: 66px; }
+  .map-node__icon { font-size: 1.6rem; }
+  .map-node__label { font-size: 0.65rem; }
+}
+
+/* ---------- Meet-the-guide scene (side character intro) ----------
+   Same visual language as TwisterActivity: full-screen world art with
+   the guide standing on it, dialogue box docked at the bottom — rather
+   than a centered popup card, so the world's setting is actually
+   visible while the guide talks.
+*/
+.guide-scene {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  animation: unlockFadeIn 0.3s ease forwards;
+}
+
+.guide-scene__standee {
+  position: relative;
+  z-index: 1;
+  align-self: center;
+  width: clamp(160px, 42vw, 260px);
+  height: auto;
+  margin-bottom: -4%;
+  filter: drop-shadow(0 12px 14px rgba(0, 0, 0, 0.4));
+  animation: unlockPop 0.4s cubic-bezier(0.22, 1.4, 0.36, 1) forwards;
+}
+
+.guide-scene__standee--pending {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: rgba(255, 250, 240, 0.25);
+  border: 3px dashed rgba(255, 250, 240, 0.6);
+  font-size: 3rem;
+  margin-bottom: 4%;
+}
+
+.guide-dialogue {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 640px;
+  align-self: center;
+  margin: 0 auto;
+  padding: 20px 22px 22px;
+  background: linear-gradient(
+    180deg,
+    rgba(59, 42, 30, 0.72) 0%,
+    rgba(40, 28, 20, 0.9) 100%
+  );
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-top: 4px solid var(--gold);
+  border-radius: 22px 22px 0 0;
+  color: #fff;
+  font-family: "Segoe UI", sans-serif;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35);
+}
+
+@media (min-width: 641px) {
+  .guide-dialogue {
+    border-radius: 22px;
+    margin-bottom: 26px;
+    border: 3px solid var(--gold);
+  }
+}
+
+.guide-dialogue__tag {
+  display: inline-block;
+  background: var(--gold);
+  color: var(--ink);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  padding: 4px 12px;
+  border-radius: 999px;
+  margin-bottom: 12px;
+}
+
+.guide-dialogue__line {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.guide-dialogue__speaker {
+  font-weight: 800;
+  color: #7fe0d6;
+}
+
+.guide-dialogue__controls {
+  margin-top: 14px;
+}
+
+.guide-dialogue__controls button {
+  background: linear-gradient(180deg, var(--twister-orange) 0%, var(--twister-red) 100%);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 24px;
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: 0 5px 0 #7a2013, 0 8px 14px rgba(181, 48, 31, 0.35);
+  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
+}
+
+.guide-dialogue__controls button:hover { filter: brightness(1.05); }
+.guide-dialogue__controls button:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 #7a2013, 0 4px 8px rgba(181, 48, 31, 0.3);
+}
+
+@media (max-width: 480px) {
+  .guide-dialogue { padding: 16px 18px 18px; }
+  .guide-dialogue__line { font-size: 0.95rem; }
+}
