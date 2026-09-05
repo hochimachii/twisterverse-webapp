@@ -1,0 +1,342 @@
+/* OpeningScene.css — the client's story intro, shown once after profile
+   creation.
+
+   Two separate layers, deliberately:
+   1. .library-scene — decorative SVG backdrop, free to crop at edges.
+   2. .reading-nook — desk + book + Twisty, plain CSS positioning
+      (percent/flex), so these story-critical elements always line up
+      with each other regardless of screen size or how much of the SVG
+      backdrop got cropped.
+*/
+
+.opening-scene {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  background: #2a1d14;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.opening-skip-btn {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 30;
+  background: rgba(255, 250, 240, 0.85);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 2.5px solid var(--card-border);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 7px 13px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 3px 0 var(--gold-dark), 0 5px 8px rgba(201, 143, 16, 0.25);
+}
+
+.opening-skip-btn:hover { filter: brightness(1.05); }
+
+/* ---------- Stage ---------- */
+.opening-stage {
+  position: relative;
+  flex: 1;
+  min-height: 340px;
+  overflow: hidden;
+}
+
+.library-scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.opening-glow-pulse {
+  animation: openingGlowPulse 2.4s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes openingGlowPulse {
+  0%, 100% { opacity: 0.75; transform: scale(0.96); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+/* Floating dust motes, above the backdrop but below the story elements */
+.opening-dust {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.opening-dust-mote {
+  position: absolute;
+  bottom: 20%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #ffe9a8;
+  box-shadow: 0 0 6px 2px rgba(255, 233, 168, 0.6);
+  opacity: 0;
+  animation: openingDustFloat linear infinite;
+}
+
+@keyframes openingDustFloat {
+  0% { opacity: 0; transform: translateY(0) translateX(0); }
+  15% { opacity: 0.8; }
+  85% { opacity: 0.5; }
+  100% { opacity: 0; transform: translateY(-60vh) translateX(var(--drift, 10px)); }
+}
+
+.opening-dust-mote-1 { left: 15%; --drift: 8px; animation-duration: 7s; animation-delay: 0s; }
+.opening-dust-mote-2 { left: 28%; --drift: -10px; animation-duration: 8.5s; animation-delay: 1.2s; }
+.opening-dust-mote-3 { left: 40%; --drift: 6px; animation-duration: 6.5s; animation-delay: 0.5s; }
+.opening-dust-mote-4 { left: 55%; --drift: -8px; animation-duration: 7.8s; animation-delay: 2s; }
+.opening-dust-mote-5 { left: 65%; --drift: 10px; animation-duration: 6.8s; animation-delay: 0.8s; }
+.opening-dust-mote-6 { left: 75%; --drift: -6px; animation-duration: 8s; animation-delay: 1.6s; }
+.opening-dust-mote-7 { left: 85%; --drift: 8px; animation-duration: 7.3s; animation-delay: 0.3s; }
+.opening-dust-mote-8 { left: 50%; --drift: -12px; animation-duration: 9s; animation-delay: 2.4s; }
+
+/* The magic map, floating well above the desk */
+.opening-map {
+  position: absolute;
+  z-index: 5;
+  top: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(56vw, 210px);
+  height: auto;
+  animation: openingFadeIn 0.5s ease forwards;
+}
+
+.opening-map-swirl {
+  animation: openingMapReveal 0.6s cubic-bezier(0.22, 1.4, 0.36, 1) forwards;
+  transform-origin: center;
+}
+
+@keyframes openingMapReveal {
+  0% { opacity: 0; transform: scale(0.6) rotate(-8deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+@keyframes openingFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- Reading nook: desk + book + Twisty ---------- */
+/* This whole group is positioned as one unit at the bottom of the
+   stage. Twisty, the desk, and the book are all plain CSS children of
+   it, so they can never drift out of alignment with each other. */
+.reading-nook {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 44%;
+  min-height: 220px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* Twisty stands in this group at z-index 2, BELOW the desk front panel
+   (z-index 3) — that ordering is what actually hides her sprite's
+   cropped-off bottom, unlike the earlier version of this file where
+   the z-indices were backwards and she rendered on top of everything. */
+.opening-twisty {
+  position: relative;
+  z-index: 2;
+  width: clamp(190px, 50vw, 320px);
+  height: auto;
+  filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.35));
+  animation: openingTwistyIn 0.5s ease forwards;
+}
+
+@keyframes openingTwistyIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* The desk's front panel — a solid CSS block, generously tall, so it
+   reliably covers Twisty's lower body regardless of exactly where her
+   sprite's artwork happens to be cropped. */
+.desk-front {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: min(74%, 300px);
+  height: 15%;
+  min-height: 52px;
+  max-height: 78px;
+  background: linear-gradient(180deg, #8a6a52 0%, #5a4131 100%);
+  border: 3px solid #2a1d14;
+  border-radius: 16px 16px 6px 6px;
+  box-shadow: 0 -3px 0 var(--gold) inset, 0 10px 18px rgba(0, 0, 0, 0.35);
+}
+
+/* Book sitting on top of the desk, right at its top edge */
+.book-prop {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(15% - 6px);
+  width: 15%;
+  min-width: 54px;
+  max-width: 78px;
+  height: 8%;
+  min-height: 26px;
+  max-height: 36px;
+  background: linear-gradient(180deg, #d64536 0%, #b5301f 100%);
+  border: 2.5px solid #7a2013;
+  border-radius: 4px;
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
+}
+
+.book-prop::before {
+  /* spine line down the middle */
+  content: "";
+  position: absolute;
+  top: 10%;
+  bottom: 10%;
+  left: 50%;
+  width: 2px;
+  background: #7a2013;
+}
+
+.book-prop__pages {
+  position: absolute;
+  right: -4px;
+  top: 12%;
+  bottom: 12%;
+  width: 5px;
+  background: repeating-linear-gradient(
+    180deg,
+    #f3e2b8 0 2px,
+    #e0cfa0 2px 4px
+  );
+  border-radius: 0 2px 2px 0;
+}
+
+.book-prop--glowing {
+  animation: openingGlowPulse 2.2s ease-in-out infinite;
+  box-shadow: 0 0 18px 8px rgba(244, 196, 48, 0.55), 0 6px 10px rgba(0, 0, 0, 0.3);
+}
+
+.book-prop--glowing::after {
+  content: "";
+  position: absolute;
+  inset: -60% -120%;
+  background: radial-gradient(circle, rgba(255, 243, 196, 0.55) 0%, rgba(244, 196, 48, 0) 70%);
+  z-index: -1;
+}
+
+/* ---------- Dialogue box ---------- */
+.opening-dialogue {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 640px;
+  align-self: center;
+  margin: 0 auto;
+  padding: 20px 22px 22px;
+  background: linear-gradient(
+    180deg,
+    rgba(59, 42, 30, 0.72) 0%,
+    rgba(40, 28, 20, 0.9) 100%
+  );
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-top: 4px solid var(--gold);
+  border-radius: 22px 22px 0 0;
+  color: #fff;
+  font-family: "Segoe UI", sans-serif;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35);
+}
+
+@media (min-width: 641px) {
+  .opening-dialogue {
+    border-radius: 22px;
+    margin-bottom: 26px;
+    border: 3px solid var(--gold);
+  }
+}
+
+.opening-speaker {
+  display: inline-block;
+  background: var(--gold);
+  color: var(--ink);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  padding: 4px 12px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+}
+
+.opening-text {
+  font-size: 1.08rem;
+  font-weight: 600;
+  line-height: 1.5;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.opening-controls {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.opening-progress {
+  display: flex;
+  gap: 6px;
+}
+
+.opening-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.opening-dot--active {
+  background: var(--gold);
+  transform: scale(1.3);
+}
+
+.opening-next-btn {
+  background: linear-gradient(180deg, var(--verse-teal) 0%, var(--verse-teal-dark) 100%);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 22px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 5px 0 var(--verse-teal-dark), 0 8px 14px rgba(31, 92, 77, 0.35);
+  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
+}
+
+.opening-next-btn:hover { filter: brightness(1.05); }
+.opening-next-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 var(--verse-teal-dark), 0 4px 8px rgba(31, 92, 77, 0.3);
+}
+
+@media (max-width: 480px) {
+  .opening-dialogue { padding: 16px 18px 18px; }
+  .opening-text { font-size: 0.98rem; }
+}

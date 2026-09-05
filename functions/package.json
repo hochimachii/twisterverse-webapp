@@ -1,0 +1,16 @@
+{
+  "name": "twisterverse-functions",
+  "description": "Server-side speech-to-text for platforms without the Web Speech API",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": "22"
+  },
+  "dependencies": {
+    "@google-cloud/speech": "^6.7.0",
+    "firebase-functions": "^6.1.0"
+  },
+  "scripts": {
+    "logs": "firebase functions:log --only transcribe"
+  }
+}

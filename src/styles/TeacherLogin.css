@@ -1,0 +1,30 @@
+/* TeacherLogin.css — small additions on top of LoginPage.css's shared
+   card/input/button styles, since this screen intentionally reuses
+   that visual language rather than duplicating it. */
+
+.teacher-badge {
+  position: absolute;
+  top: 6%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(59, 42, 30, 0.75);
+  color: var(--gold);
+  font-weight: 800;
+  font-size: 0.9rem;
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 2px solid var(--gold);
+  z-index: 6;
+  white-space: nowrap;
+}
+
+.teacher-back-link {
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.8);
+  border-bottom-color: rgba(255, 255, 255, 0.4);
+}
+
+.teacher-back-link:hover {
+  color: #fff;
+  border-bottom-color: #fff;
+}
