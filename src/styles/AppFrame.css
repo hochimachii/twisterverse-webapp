@@ -67,7 +67,14 @@
     height: 100vh;
     height: 100dvh;
     margin-inline: auto;
-    overflow: hidden;
+    /* The FRAME scrolls; its child must not be height-constrained.
+       Forcing height:100% on the page turned StageSelection from a page
+       that grows with its content into a fixed box, and .stage-wrapper
+       (overflow:hidden, for its rounded corners) then silently clipped
+       361px of level grid with no way to reach it. */
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
     z-index: 1;
     /* Lifts the play area off the backdrop so it reads as a deliberate
        frame. */
@@ -75,11 +82,27 @@
       0 24px 60px rgba(0, 0, 0, 0.55);
   }
 
-  /* Pages that scroll (dashboard, teacher-free student pages) need their
-     own scroll context now that the frame clips overflow. */
-  .app-frame > * {
-    height: 100%;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+  /* Full-screen overlays are position:fixed, and fixed elements are
+     positioned against the VIEWPORT, not the frame - establishing a
+     container does not change that. So the world-intro scene painted
+     its background across the whole 1440px desktop while the game sat
+     in a 480px column beside it.
+     Pinning them to the same box as the frame keeps every overlay
+     inside the play area. Listed explicitly rather than with a wildcard
+     so a future fixed element is a deliberate addition, not a silent
+     one. */
+  /* Prefixed with .app-frame for specificity: AppFrame.css is imported
+     before the page components, so page rules land later in the bundle
+     and win at equal weight. .guide-scene also sets inset:0, which is
+     left AND right, so both have to be overridden. */
+  .app-frame .guide-scene,
+  .app-frame .unlock-overlay,
+  .app-frame .tutorial-overlay,
+  .app-frame .welcome-overlay,
+  .app-frame .key-overlay {
+    left: 50%;
+    right: auto;
+    width: min(100vw, calc(100vh * 9 / 16), 480px);
+    transform: translateX(-50%);
   }
 }

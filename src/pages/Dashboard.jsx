@@ -63,14 +63,21 @@ const LEGACY_GENDER = { Male: "Lalaki", Female: "Babae", Other: "Iba pa" };
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { username, uid, logout } = useAuth();
+  const { username, uid, authLoading, logout } = useAuth();
   const [profile, setProfile] = useState(null);
   const [stats, setStats] = useState(null);
 
   useEffect(() => {
-    if (!username) {
+    // Wait for Firebase to report the session before deciding anything.
+    // `username` is restored from sessionStorage synchronously but `uid`
+    // is not, so acting early meant getUserProfile(null) came back empty,
+    // isProfileComplete() said false, and a signed-in student was thrown
+    // into profile setup. Every refresh of the dashboard did this.
+    if (authLoading) return undefined;
+
+    if (!username || !uid) {
       navigate("/login");
-      return;
+      return undefined;
     }
 
     let cancelled = false;
@@ -94,7 +101,7 @@ export default function Dashboard() {
     return () => {
       cancelled = true;
     };
-  }, [username, uid, navigate]);
+  }, [authLoading, username, uid, navigate]);
 
   const handleSignOut = async () => {
     await logout();
@@ -121,9 +128,9 @@ export default function Dashboard() {
 
         {/* HEADER SECTION */}
         <header className="dashboard-header">
-          <h1 className="dashboard-title">Welcome, {displayName(profile)}!</h1>
+          <h1 className="dashboard-title">Maligayang pagbabalik, {displayName(profile)}!</h1>
           <button className="header-btn header-btn--signout" onClick={handleSignOut}>
-            {"\uD83D\uDEAA"} Sign Out
+            {"\uD83D\uDEAA"} Lumabas
           </button>
         </header>
 
