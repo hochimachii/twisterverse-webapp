@@ -262,7 +262,7 @@
   box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35);
 }
 
-@media (min-width: 641px) {
+@container app (min-width: 641px) {
   .opening-dialogue {
     border-radius: 22px;
     margin-bottom: 26px;
@@ -336,7 +336,7 @@
   box-shadow: 0 2px 0 var(--verse-teal-dark), 0 4px 8px rgba(31, 92, 77, 0.3);
 }
 
-@media (max-width: 480px) {
+@container app (max-width: 480px) {
   .opening-dialogue { padding: 16px 18px 18px; }
   .opening-text { font-size: 0.98rem; }
 }

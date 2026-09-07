@@ -148,7 +148,7 @@
 }
 
 /* Responsive */
-@media (max-width: 480px) {
+@container app (max-width: 480px) {
   .stage-wrapper { padding: 20px 16px 18px; }
   .stage-wrapper h1 { font-size: 1.5rem; }
   .level-grid { grid-template-columns: repeat(3, 1fr); }
@@ -371,7 +371,7 @@
   color: var(--ink-soft);
 }
 
-@media (max-width: 480px) {
+@container app (max-width: 480px) {
   .map-node { width: 66px; height: 66px; }
   .map-node__icon { font-size: 1.6rem; }
   .map-node__label { font-size: 0.65rem; }
@@ -442,7 +442,7 @@
   box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35);
 }
 
-@media (min-width: 641px) {
+@container app (min-width: 641px) {
   .guide-dialogue {
     border-radius: 22px;
     margin-bottom: 26px;
@@ -498,7 +498,7 @@
   box-shadow: 0 2px 0 #7a2013, 0 4px 8px rgba(181, 48, 31, 0.3);
 }
 
-@media (max-width: 480px) {
+@container app (max-width: 480px) {
   .guide-dialogue { padding: 16px 18px 18px; }
   .guide-dialogue__line { font-size: 0.95rem; }
 }

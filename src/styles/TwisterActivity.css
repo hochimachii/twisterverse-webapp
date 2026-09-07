@@ -152,7 +152,7 @@
   box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35);
 }
 
-@media (min-width: 641px) {
+@container app (min-width: 641px) {
   .dialogue-box {
     border-radius: 22px;
     margin-bottom: 26px;
@@ -398,7 +398,7 @@
 }
 
 /* ---------- Responsive ---------- */
-@media (max-width: 480px) {
+@container app (max-width: 480px) {
   .dialogue-box { padding: 16px 18px 20px; }
   .dialogue-text { font-size: 1.02rem; }
   .twisty-standee { width: clamp(120px, 46vw, 200px); }

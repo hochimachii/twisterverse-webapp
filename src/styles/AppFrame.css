@@ -28,6 +28,13 @@
   width: 100%;
   min-height: 100vh;
   min-height: 100dvh;
+  /* The page stylesheets query THIS, not the window. Without it a 1440px
+     desktop would keep firing its desktop breakpoints inside a 506px
+     frame - the logo rendered at 40% width where a phone gives it 82%.
+     Framing fixed the shape; this is what makes the sizes match too.
+     Works unchanged on phones, where the frame is the full viewport. */
+  container-type: inline-size;
+  container-name: app;
 }
 
 /* 9/16 = 0.5625. Above that ratio the viewport is wider than the art, so
@@ -35,20 +42,33 @@
    frame should kick in. Below it (phones, most tablets in portrait)
    nothing changes at all. */
 @media (min-aspect-ratio: 9/16) {
-  body {
-    /* Deep brown-black, picked from the darkest part of the stage art so
-       the letterboxing reads as a frame rather than a broken layout. */
+  /* Deep brown-black, picked from the darkest part of the stage art so
+     the letterboxing reads as a frame rather than a broken layout.
+     Painted by its own fixed element because every page sets its own
+     body background and wins the cascade from here. */
+  .app-frame__backdrop {
+    position: fixed;
+    inset: 0;
     background: #14100c;
+    z-index: 0;
   }
 
   .app-frame {
     position: fixed;
     inset: 0;
-    width: min(100vw, calc(100vh * 9 / 16));
+    /* Capped at 480px so the container stays inside the design's own
+       phone tier - its next breakpoint is 481px, meant for tablets, and
+       a 506px frame was tripping it and rendering the logo at 62% where
+       a phone gives 82%.
+       The cap costs almost nothing in framing: 480x900 is 0.53, and a
+       real 390x844 phone is 0.46, so this frame is actually CLOSER to
+       9:16 than the phones the art already displays on correctly. */
+    width: min(100vw, calc(100vh * 9 / 16), 480px);
     height: 100vh;
     height: 100dvh;
     margin-inline: auto;
     overflow: hidden;
+    z-index: 1;
     /* Lifts the play area off the backdrop so it reads as a deliberate
        frame. */
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06),

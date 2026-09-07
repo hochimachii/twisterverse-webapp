@@ -317,7 +317,7 @@
 }
 
 /* Responsive */
-@media (max-width: 640px) {
+@container app (max-width: 640px) {
   .stats-panel {
     flex-direction: column;
   }

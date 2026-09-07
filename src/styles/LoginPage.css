@@ -72,11 +72,11 @@ body {
   to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
 }
 
-@media (min-width: 481px) {
+@container app (min-width: 481px) {
   .login-logo { top: 5%; width: 62%; }
 }
 
-@media (min-width: 1025px) {
+@container app (min-width: 1025px) {
   .login-logo { top: 6%; width: 40%; }
 }
 
@@ -151,7 +151,7 @@ body {
 }
 
 /* Slightly larger padding/gap on larger screens */
-@media (min-width: 768px) {
+@container app (min-width: 768px) {
   .auth-form { padding: 26px 22px 22px; gap: var(--desktop-gap); }
 }
 
@@ -290,7 +290,7 @@ body {
 /* Welcome overlay now lives in its own component: see WelcomeOverlay.jsx / WelcomeOverlay.css */
 
 /* ---------- Responsive tuning ---------- */
-@media (max-width: 480px) {
+@container app (max-width: 480px) {
   :root { --max-form-width: 340px; }
   .form-container { bottom: 3.5%; }
   .auth-form { padding: 14px 14px 12px; gap: 8px; }
@@ -298,13 +298,13 @@ body {
 }
 
 /* Tablet */
-@media (min-width: 481px) and (max-width: 1024px) {
+@container app (min-width: 481px) and (max-width: 1024px) {
   .form-container { bottom: 5%; }
   .auth-form { padding: 18px 16px 14px; gap: 10px; }
 }
 
 /* Desktop */
-@media (min-width: 1025px) {
+@container app (min-width: 1025px) {
   .form-container { bottom: 7%; }
   .auth-form { padding: 20px 18px 16px; gap: 12px; }
 }

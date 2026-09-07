@@ -213,7 +213,7 @@
 }
 
 /* Responsive */
-@media (max-width: 480px) {
+@container app (max-width: 480px) {
   .profile-wrapper {
     padding: 22px 18px 18px;
   }

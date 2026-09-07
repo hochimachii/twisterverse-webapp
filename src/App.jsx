@@ -41,6 +41,13 @@ function AppRoutes() {
   return (
     <>
       <MusicPlayer src={musicSrc} />
+      {!isTeacherView && (
+        // A real element rather than a body background: each page sets
+        // its own body background, and those rules land later in the
+        // cascade, so styling body here would be overridden depending on
+        // which page happens to be mounted.
+        <div className="app-frame__backdrop" aria-hidden="true" />
+      )}
       <div className={isTeacherView ? undefined : "app-frame"}>
       <Routes>
         {/* Entry route */}
