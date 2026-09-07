@@ -1,0 +1,65 @@
+/* src/styles/AppFrame.css
+ *
+ * Keeps asset placement identical on desktop.
+ *
+ * THE PROBLEM: every stage background is 2160x3840 - exactly 9:16 - and
+ * the pages paint them with background-size: cover. On a phone that
+ * shows the artwork as drawn. On a 1440x900 desktop the same rule crops
+ * the top and bottom away and zooms into a middle band, so the bahay
+ * kubo, the bell tower, Twisty and the crown all sit somewhere different
+ * relative to the UI. The CSS never moved: the viewport changed shape
+ * underneath it.
+ *
+ * THE FIX: on any viewport wider than the art, constrain the play area
+ * to 9:16 and centre it. The composition then matches a phone exactly,
+ * because the frame IS phone-shaped.
+ *
+ * WHY ONLY THE WIDTH IS CONSTRAINED: the frame is fixed and full-height,
+ * so 100vh inside it still equals the frame's height. That means none of
+ * the page CSS has to change - every existing height: 100vh rule keeps
+ * working and keeps meaning the same thing.
+ *
+ * The teacher dashboard deliberately does NOT get this frame - it is a
+ * data table with filters and CSV export, meant for an adult on a wide
+ * screen. See App.jsx.
+ */
+
+.app-frame {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* 9/16 = 0.5625. Above that ratio the viewport is wider than the art, so
+   cover would start cropping vertically - which is exactly when the
+   frame should kick in. Below it (phones, most tablets in portrait)
+   nothing changes at all. */
+@media (min-aspect-ratio: 9/16) {
+  body {
+    /* Deep brown-black, picked from the darkest part of the stage art so
+       the letterboxing reads as a frame rather than a broken layout. */
+    background: #14100c;
+  }
+
+  .app-frame {
+    position: fixed;
+    inset: 0;
+    width: min(100vw, calc(100vh * 9 / 16));
+    height: 100vh;
+    height: 100dvh;
+    margin-inline: auto;
+    overflow: hidden;
+    /* Lifts the play area off the backdrop so it reads as a deliberate
+       frame. */
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06),
+      0 24px 60px rgba(0, 0, 0, 0.55);
+  }
+
+  /* Pages that scroll (dashboard, teacher-free student pages) need their
+     own scroll context now that the frame clips overflow. */
+  .app-frame > * {
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}

@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import MusicPlayer from "./components/MusicPlayer";
 import { AuthProvider } from "./context/AuthContext";
 import "./styles/theme.css";
+import "./styles/AppFrame.css";
 
 // Page imports
 import LoginPage from "./pages/LoginPage";
@@ -31,9 +32,16 @@ function AppRoutes() {
     musicSrc = "/music/ending.mp3";
   }
 
+  // The teacher flow is the one part of the app meant for a wide screen:
+  // a filterable student table with CSV export. Everything else is drawn
+  // for a 9:16 phone, so it gets framed to that shape on desktop rather
+  // than letting the artwork re-crop itself. See AppFrame.css.
+  const isTeacherView = location.pathname.startsWith("/teacher");
+
   return (
     <>
       <MusicPlayer src={musicSrc} />
+      <div className={isTeacherView ? undefined : "app-frame"}>
       <Routes>
         {/* Entry route */}
         <Route path="/" element={<LoginPage />} />
@@ -54,6 +62,7 @@ function AppRoutes() {
         {/* Fallback */}
         <Route path="*" element={<h1>404 - Hindi natagpuan ang pahina</h1>} />
       </Routes>
+      </div>
     </>
   );
 }
