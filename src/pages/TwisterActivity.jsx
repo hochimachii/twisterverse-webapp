@@ -36,7 +36,7 @@ const RECITE_SECONDS = 5;
 export default function TwisterActivity() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { username, uid } = useAuth();
+  const { username, uid, authLoading } = useAuth();
   const { world, level } = location.state || { world: 1, level: 1 };
 
   const worldData = getWorld(world);
@@ -51,6 +51,14 @@ export default function TwisterActivity() {
   // this is a guard against a call racing ahead of auth rather than a
   // path anyone plays through - it falls back to the browser recognizer.
   const signedIn = Boolean(uid);
+  // While Firebase is still resolving the session, uid is null and
+  // useServerMode below computes to FALSE - which silently downgrades the
+  // attempt to the browser recognizer, which cannot take phrase hints.
+  // Measured on one real session: the server path scored 100/83/80 while
+  // the browser path on the same voice scored 40/0/0/20. Starting is
+  // blocked until auth is known so that downgrade cannot happen.
+  // Mobile browsers discard backgrounded tabs and reload them, so this
+  // window is hit far more often on a phone than it looks.
   const useServerMode = needsServerTranscription() && signedIn;
   // Whether to run MediaRecorder ALONGSIDE the browser's speech
   // recognition, purely to capture audio for the Teacher Dashboard.
@@ -707,6 +715,10 @@ export default function TwisterActivity() {
               <p className="dialogue-warning">
                 {"\u26A0\uFE0F"} Hindi suportado ng browser mo ang speech recognition.
                 Subukan ang Google Chrome.
+              </p>
+            ) : authLoading ? (
+              <p className="dialogue-checking">
+                {"\u23F3"} Naghahanda{"\u2026"}
               </p>
             ) : checking ? (
               <p className="dialogue-checking">
