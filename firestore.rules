@@ -1,0 +1,48 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // A teacher is anyone with a doc in /teachers keyed by their own uid.
+    // Costs one extra document read per rule evaluation — negligible at
+    // classroom scale.
+    function isTeacher() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/teachers/$(request.auth.uid));
+    }
+
+    // Student profiles (nickname, avatar, grade, section, gender)
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isTeacher();
+      allow write: if isOwner(uid);
+    }
+
+    // Per-student level-completion progress
+    match /progress/{uid} {
+      allow read: if isOwner(uid) || isTeacher();
+      allow write: if isOwner(uid);
+    }
+
+    // Recitation attempts — append-only log, never editable once written,
+    // so a student can't quietly rewrite a failed attempt into a pass.
+    match /attempts/{attemptId} {
+      allow read: if isTeacher() ||
+        (isSignedIn() && resource.data.uid == request.auth.uid);
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // Teacher accounts — a teacher can only see/edit their own record.
+    // (Nothing in the app currently needs to list all teachers.)
+    match /teachers/{uid} {
+      allow read, write: if isOwner(uid);
+    }
+  }
+}

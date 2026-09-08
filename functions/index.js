@@ -1,0 +1,316 @@
+// functions/index.js
+//
+// The `transcribe` callable — server-side speech-to-text for platforms
+// the browser's Web Speech API refuses to serve (iOS/Safari and the
+// Facebook/Messenger/Instagram in-app WebViews). See
+// src/services/speechService.js for the client half and the decision of
+// when this gets called at all.
+//
+// WHY SPEECH-TO-TEXT V2 AND NOT V1: iOS Safari's MediaRecorder produces
+// MP4/AAC audio. The v1 API's encoding list doesn't include AAC at all
+// (LINEAR16, FLAC, MULAW, AMR, OGG_OPUS, WEBM_OPUS, MP3...), so v1
+// physically cannot read the recordings from the exact platform this
+// function exists to support. V2's auto-decoding handles M4A/MP4 audio
+// alongside WEBM/OGG Opus, so one code path covers both iOS and the
+// Android/desktop fallback case.
+//
+// COST: this is the only thing in the app that spends money per use.
+// Guards, in order of importance:
+//   1. Sign-in required — no anonymous callers.
+//   2. Hard cap on payload size (a five-second clip is ~15-40 KB).
+//   3. maxInstances caps how much can be burned concurrently.
+// Consider also enabling App Check once you've registered reCAPTCHA —
+// see ENFORCE_APP_CHECK below.
+
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { setGlobalOptions } = require("firebase-functions/v2");
+const speech = require("@google-cloud/speech");
+
+// Region for BOTH the function and the Speech API. Keep them the same:
+// the audio travels function -> Speech, so co-locating avoids a
+// cross-continent hop on every attempt. asia-southeast1 (Singapore) is
+// the closest region to the Philippines.
+//
+// IMPORTANT: the client must ask for this same region. See
+// getFunctions(app, FUNCTIONS_REGION) in src/services/speechService.js —
+// the SDK defaults to us-central1 and will 404 if the two disagree.
+const REGION = "asia-southeast1";
+
+// Recognition model. Availability varies by model, language AND region,
+// and Google changes the matrix over time — verify yours under
+// Speech-to-Text in the Cloud console before assuming a failure is a bug
+// in this file. "chirp_2" has the broadest language coverage (Filipino
+// included); "short" is a cheaper, lower-latency option where offered.
+const MODEL = "chirp_2";
+
+const LANGUAGE = "fil-PH";
+
+// Boost for the target words. 15 was measured to work well: it
+// corrected "bebo" to "bibo" and "boom again" to "bumangon" on real
+// audio.
+//
+// DO NOT add the full twister as a phrase here. It was tried, measured,
+// and rejected. Supplying the whole sentence dramatically improves clean
+// audio - a recitation that came back as "liri liri liri liri liri" was
+// transcribed perfectly, dropped "sa" included - but it also lets the
+// decoder snap UNINFORMATIVE audio onto that sentence. Three seconds of
+// white noise transcribed as the exact target, which scores 100%
+// "Perpekto" for a student who never spoke.
+//
+// That is not a tuning problem. It was reproduced identically at boost
+// 20, 8 and 1 - the minimum - so the mere presence of a complete phrase
+// is enough. Individual words cannot do this: the same noise returned
+// only "liri,liwanag,lumilipad", a partial that correctly fails.
+//
+// Any future attempt at sentence-level adaptation needs a noise gate
+// that actually separates speech from non-speech FIRST. Confidence does
+// not: non-speech has measured 0.70 against real speech at 0.71.
+const WORD_BOOST = 15;
+
+// Roughly 4 MB of base64 — vastly more than a five-second clip needs,
+// while staying under the v2 sync-recognize inline limit (10 MB / 60s).
+const MAX_AUDIO_BYTES = 4 * 1024 * 1024;
+
+// Flip to true after registering an App Check provider (reCAPTCHA
+// Enterprise for web) AND shipping a client that initializes App Check.
+// Turning it on before both are done locks out every real user.
+const ENFORCE_APP_CHECK = false;
+
+setGlobalOptions({
+  region: REGION,
+  maxInstances: 10,
+  memory: "512MiB",
+  timeoutSeconds: 60
+});
+
+// Regional endpoint is required for v2 outside the global location.
+// Constructed once at cold start and reused across warm invocations.
+const client = new speech.v2.SpeechClient({
+  apiEndpoint: `${REGION}-speech.googleapis.com`
+});
+
+let cachedRecognizerPath = null;
+async function recognizerPath() {
+  if (!cachedRecognizerPath) {
+    const projectId = await client.getProjectId();
+    // "_" is the inline recognizer: config travels with the request, so
+    // there's no recognizer resource to create or keep in sync.
+    cachedRecognizerPath = `projects/${projectId}/locations/${REGION}/recognizers/_`;
+  }
+  return cachedRecognizerPath;
+}
+
+/**
+ * Strips a data: URL wrapper down to bare base64.
+ *
+ * The client sends FileReader.readAsDataURL output, which looks like
+ * "data:audio/webm;codecs=opus;base64,<payload>". Everything before the
+ * comma is metadata the Speech API neither needs nor accepts — and the
+ * ";codecs=opus" parameter in particular has already caused trouble
+ * elsewhere in this app (see the Cloudinary note in audioStorage.js).
+ */
+function toBareBase64(input) {
+  const comma = input.indexOf(",");
+  return input.startsWith("data:") && comma !== -1
+    ? input.slice(comma + 1)
+    : input;
+}
+
+exports.transcribe = onCall(
+  { enforceAppCheck: ENFORCE_APP_CHECK },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError(
+        "unauthenticated",
+        "Kailangan mong maka-login bago gamitin ito."
+      );
+    }
+
+    const { audioBase64, phrases } = request.data || {};
+
+    if (typeof audioBase64 !== "string" || audioBase64.length === 0) {
+      throw new HttpsError("invalid-argument", "Walang natanggap na audio.");
+    }
+
+    const content = toBareBase64(audioBase64);
+
+    // base64 is 4 chars per 3 bytes; compare on the encoded length so we
+    // reject before allocating a decoded buffer.
+    if (content.length > MAX_AUDIO_BYTES) {
+      throw new HttpsError(
+        "invalid-argument",
+        "Masyadong mahaba ang recording."
+      );
+    }
+
+    // The app always knows what the student is SUPPOSED to say, so the
+    // target words go in as recognition hints. This measurably improves
+    // Filipino accuracy — without them the recognizer tends to snap
+    // unfamiliar twister words toward common English ones.
+    const adaptation =
+      Array.isArray(phrases) && phrases.length
+        ? {
+            phraseSets: [
+              {
+                inlinePhraseSet: {
+                  phrases: phrases
+                    .filter((p) => typeof p === "string" && p.trim())
+                    .slice(0, 500) // API caps the phrase count
+                    .map((value) => ({ value, boost: WORD_BOOST }))
+                }
+              }
+            ]
+          }
+        : undefined;
+
+    try {
+      const [response] = await client.recognize({
+        recognizer: await recognizerPath(),
+        // Let the service read the container/codec from the audio header.
+        // This is the whole reason for v2 — it is what makes iOS's
+        // MP4/AAC and Android's WEBM_OPUS work through one code path.
+        // (The client still sends an `encoding` hint; v2 doesn't need it,
+        // and ignoring it means one less thing to keep in sync.)
+        config: {
+          autoDecodingConfig: {},
+          model: MODEL,
+          languageCodes: [LANGUAGE],
+          features: { enableAutomaticPunctuation: false },
+          adaptation
+        },
+        content
+      });
+
+      // Results arrive per utterance; a short recitation is usually one,
+      // but joining is correct if the student pauses mid-sentence.
+      const results = response.results || [];
+      const transcript = results
+        .map((r) => r.alternatives?.[0]?.transcript || "")
+        .join(" ")
+        .trim();
+
+      // DON'T add a confidence threshold here to filter out silence.
+      // It was measured and it does not work: non-speech inputs scored
+      // up to 0.70 confidence (three seconds of 200Hz hum transcribed
+      // as "0 1 2 3 4 5 6 7 8 9 10") against real speech at 0.71. There
+      // is no separating value. Silence is screened on the client
+      // instead, before the audio is ever sent - see hasAudibleAudio in
+      // src/services/speechService.js.
+      const confidence = results
+        .map((r) => r.alternatives?.[0]?.confidence)
+        .find((c) => typeof c === "number");
+
+      console.log(
+        `transcribe: uid=${request.auth.uid} results=${results.length} ` +
+          `confidence=${confidence} ` +
+          `transcript=${JSON.stringify(transcript)}`
+      );
+
+      return { transcript };
+    } catch (err) {
+      // Log the real cause for us, return something the student can read.
+      console.error("Speech-to-Text failed:", err);
+      throw new HttpsError(
+        "internal",
+        "Hindi ma-proseso ang boses. Subukan ulit."
+      );
+    }
+  }
+);
+
+// ---------------------------------------------------------------------
+// resetStudentPassword
+//
+// Students log in with a username mapped to an invented .local domain,
+// so Firebase's own reset email has nowhere to deliver. Children also
+// should not need an inbox to get back into a game. The classroom answer
+// is the one that already happens in practice: the teacher fixes it.
+//
+// Setting a password without knowing the old one requires the Admin SDK,
+// which is why this is a function and not client code.
+//
+// The authorization here is doing real work. firestore.rules currently
+// let ANY teacher read every student document, and school scoping is
+// enforced only in the dashboard UI - so without these checks any
+// teacher could take over any child's account in any school.
+// ---------------------------------------------------------------------
+
+const admin = require("firebase-admin");
+
+admin.initializeApp();
+
+// Firebase Auth's own floor. Stated here so the error is in Filipino and
+// arrives before the write rather than as a raw auth/weak-password.
+const MIN_PASSWORD_LENGTH = 6;
+
+exports.resetStudentPassword = onCall(
+  { enforceAppCheck: ENFORCE_APP_CHECK },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Kailangan mong maka-login.");
+    }
+
+    const { studentUid, newPassword } = request.data || {};
+
+    if (typeof studentUid !== "string" || !studentUid.trim()) {
+      throw new HttpsError("invalid-argument", "Walang piniling mag-aaral.");
+    }
+    if (
+      typeof newPassword !== "string" ||
+      newPassword.length < MIN_PASSWORD_LENGTH
+    ) {
+      throw new HttpsError(
+        "invalid-argument",
+        `Kailangan ng hindi bababa sa ${MIN_PASSWORD_LENGTH} na karakter.`
+      );
+    }
+
+    const db = admin.firestore();
+
+    const teacherSnap = await db.doc(`teachers/${request.auth.uid}`).get();
+    if (!teacherSnap.exists) {
+      throw new HttpsError("permission-denied", "Para lamang ito sa mga guro.");
+    }
+    const teacher = teacherSnap.data();
+
+    // Refuse to touch another TEACHER's account. Without this a teacher
+    // could pass a colleague's uid - or the master account's - and take
+    // it over, since the checks below only ever look at student data.
+    const targetIsTeacher = await db.doc(`teachers/${studentUid}`).get();
+    if (targetIsTeacher.exists) {
+      throw new HttpsError(
+        "permission-denied",
+        "Hindi maaaring i-reset ang account ng ibang guro."
+      );
+    }
+
+    const studentSnap = await db.doc(`users/${studentUid}`).get();
+    if (!studentSnap.exists) {
+      throw new HttpsError("not-found", "Walang nakitang mag-aaral.");
+    }
+    const student = studentSnap.data();
+
+    // Same rule the dashboard applies on screen, enforced here where it
+    // cannot be bypassed: a teacher may only reset their own school's
+    // students. Master access is exempt, matching what it already sees.
+    const isMaster = teacher.isMaster === true;
+    if (isMaster !== true && teacher.school) {
+      if (student.profile?.school !== teacher.school) {
+        throw new HttpsError(
+          "permission-denied",
+          "Wala ang mag-aaral na ito sa paaralan mo."
+        );
+      }
+    }
+
+    await admin.auth().updateUser(studentUid, { password: newPassword });
+
+    // Deliberately records WHO did it and to WHOM, and never the
+    // password itself.
+    console.log(
+      `resetStudentPassword: teacher=${request.auth.uid} student=${studentUid}`
+    );
+
+    return { ok: true, username: studentSnap.data().username || null };
+  }
+);

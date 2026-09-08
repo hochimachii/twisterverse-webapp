@@ -1,0 +1,16 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Recitation audio, stored at attempts/{studentUid}/{attemptId}.webm
+    // A student can upload/read only their own recordings; a teacher
+    // (a document existing at /teachers/{their uid} in Firestore) can
+    // read any student's recordings for review.
+    match /attempts/{uid}/{fileName} {
+      allow read: if request.auth != null &&
+        (request.auth.uid == uid ||
+         firestore.exists(/databases/(default)/documents/teachers/$(request.auth.uid)));
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}
