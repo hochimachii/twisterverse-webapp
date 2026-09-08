@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAllStudents, displayName } from "../services/userService";
 import { resetStudentPassword } from "../services/teacherService";
+import { audioObjectUrl } from "../services/audioStorage";
 import { schoolName, SCHOOLS } from "../data/schools";
 import { getAllAttempts } from "../services/attemptsService";
 import {
@@ -17,6 +18,63 @@ import "../styles/Dashboard.css";
 import "../styles/TeacherDashboard.css";
 import backgroundImg from "../assets/login/background.PNG";
 import { avatarSrc } from "../data/avatars";
+
+/**
+ * Plays one attempt's recording.
+ *
+ * New attempts store a Storage PATH, fetched here through the SDK so the
+ * request carries the teacher's credentials and storage.rules decide
+ * whether they may hear it. Attempts from before the migration carry a
+ * public Cloudinary URL instead - append-only rules mean those can never
+ * be converted, so both are supported indefinitely.
+ */
+function AttemptAudio({ attempt }) {
+  const [url, setUrl] = useState(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (!attempt.audioPath) return undefined;
+    let cancelled = false;
+    let created = null;
+
+    setFailed(false);
+    audioObjectUrl(attempt.audioPath).then((objectUrl) => {
+      if (cancelled) {
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
+        return;
+      }
+      created = objectUrl;
+      setUrl(objectUrl);
+      setFailed(!objectUrl);
+    });
+
+    return () => {
+      cancelled = true;
+      // The blob stays in memory until this is revoked, and a teacher can
+      // scroll through a lot of attempts.
+      if (created) URL.revokeObjectURL(created);
+    };
+  }, [attempt.audioPath]);
+
+  if (attempt.audioPath) {
+    if (url) {
+      return <audio controls src={url} className="teacher-attempt__audio" />;
+    }
+    return (
+      <span className="teacher-attempt__no-audio">
+        {failed ? "Hindi ma-load ang audio." : "Naglo-load ang audio\u2026"}
+      </span>
+    );
+  }
+
+  if (attempt.audioUrl) {
+    return <audio controls src={attempt.audioUrl} className="teacher-attempt__audio" />;
+  }
+
+  return (
+    <span className="teacher-attempt__no-audio">Walang audio na naitala</span>
+  );
+}
 
 const TIER_LABELS = {
   perfect: { label: "Perpekto", className: "tier-badge--perfect" },
@@ -537,13 +595,7 @@ export default function TeacherDashboard() {
                       </p>
                       <div className="teacher-attempt__footer">
                         <span className="teacher-attempt__time">{formatTimestamp(a)}</span>
-                        {a.audioUrl ? (
-                          <audio controls src={a.audioUrl} className="teacher-attempt__audio" />
-                        ) : (
-                          <span className="teacher-attempt__no-audio">
-                            Walang audio na naitala
-                          </span>
-                        )}
+                        <AttemptAudio attempt={a} />
                       </div>
                     </li>
                   );

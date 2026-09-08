@@ -1,8 +1,8 @@
 // src/services/attemptsService.js
 //
 // Attempt metadata lives in Firestore; the audio itself goes to
-// Cloudinary (see audioStorage.js), because Firebase Storage requires
-// the paid Blaze plan. Attempts are visible to a teacher on a
+// Firebase Storage (see audioStorage.js), and only its PATH is stored
+// here - never a public URL. Attempts are visible to a teacher on a
 // completely different device, which is the whole point.
 //
 // An attempt without a uid is never logged. Guest mode was removed at
@@ -39,14 +39,15 @@ export async function logAttempt({
     return;
   }
 
-  let audioUrl = null;
-  // Audio goes to Cloudinary (no backend needed, works on Firebase's
-  // free Spark plan). A failed upload never blocks the attempt from
-  // being logged — the transcript and score are the important part.
+  let audioPath = null;
+  // A failed upload never blocks the attempt from being logged — the
+  // transcript and score are the important part.
   if (audioDataUrl && FEATURES.audioRecordingUpload) {
-    const publicId = `twisterverse/${uid}_w${world}_l${level}_${Date.now()}`;
-    audioUrl = await uploadAudio(audioDataUrl, publicId);
-    console.log("[audio] upload result:", audioUrl || "FAILED (see error above)");
+    // Must live under the student's own uid: storage.rules only lets a
+    // student write to attempts/{their uid}/.
+    const name = `w${world}_l${level}_${Date.now()}`;
+    audioPath = await uploadAudio(audioDataUrl, uid, name);
+    console.log("[audio] upload result:", audioPath || "FAILED (see error above)");
   } else {
     console.log(
       "[audio] skipped upload — hasAudio:", Boolean(audioDataUrl),
@@ -68,7 +69,11 @@ export async function logAttempt({
     // Older records have no points field - treat missing as unknown
     // rather than zero when reading them back.
     points: typeof points === "number" ? points : null,
-    audioUrl,
+    // Path, not a URL. Attempts written before the move to Firebase
+    // Storage carry a Cloudinary `audioUrl` instead; the dashboard reads
+    // whichever is present, and append-only rules mean the old ones can
+    // never be converted.
+    audioPath,
     timestamp: serverTimestamp()
   });
 }

@@ -186,7 +186,7 @@ export function buildAttemptsCsv(students, allAttempts) {
     "Narinig",
     "Katumpakan (%)",
     "Resulta",
-    "Link ng Audio"
+    "Audio"
   ];
 
   const rows = allAttempts
@@ -206,7 +206,12 @@ export function buildAttemptsCsv(students, allAttempts) {
         a.transcript,
         typeof a.similarity === "number" ? Math.round(a.similarity * 100) : "",
         TIER_TEXT[a.tier] || a.tier || "",
-        a.audioUrl || ""
+        // Older attempts carry a public Cloudinary link, which is
+        // clickable straight from the spreadsheet. Newer ones store a
+        // Storage path instead - deliberately NOT a shareable URL, so it
+        // is listed for reference and played back in the dashboard,
+        // where the request carries the teacher's own credentials.
+        a.audioUrl || a.audioPath || ""
       ];
     });
 
