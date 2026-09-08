@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAllStudents, displayName } from "../services/userService";
+import { resetStudentPassword } from "../services/teacherService";
 import { schoolName, SCHOOLS } from "../data/schools";
 import { getAllAttempts } from "../services/attemptsService";
 import {
@@ -93,6 +94,9 @@ export default function TeacherDashboard() {
   const [search, setSearch] = useState("");
   const [selectedUid, setSelectedUid] = useState(null);
   const [schoolFilter, setSchoolFilter] = useState("");
+  // Password reset for the student currently open in the detail panel.
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetState, setResetState] = useState({ busy: false, msg: "", ok: false });
 
   // Master access sees every school. It is a flag on the teacher
   // document, so granting it is a deliberate act rather than something
@@ -217,6 +221,28 @@ export default function TeacherDashboard() {
       return true;
     });
   }, [students, gradeFilter, sectionFilter, search, teacher, isMaster, schoolFilter]);
+
+  const handleResetPassword = async () => {
+    if (!selectedStudent) return;
+    setResetState({ busy: true, msg: "", ok: false });
+    try {
+      await resetStudentPassword(selectedStudent.uid, resetPassword);
+      setResetState({
+        busy: false,
+        ok: true,
+        // The teacher has to relay this to the child, so show what was
+        // set rather than a bare "success".
+        msg: `Bagong password para kay ${displayName(selectedStudent.profile)}: ${resetPassword}`
+      });
+      setResetPassword("");
+    } catch (err) {
+      setResetState({
+        busy: false,
+        ok: false,
+        msg: err?.message || "Hindi naisagawa ang pagpapalit."
+      });
+    }
+  };
 
   const selectedStudent = students.find((s) => s.uid === selectedUid) || null;
   const selectedSummary = selectedStudent
@@ -420,6 +446,44 @@ export default function TeacherDashboard() {
                   {selectedStudent.username}
                 </p>
               </div>
+            </div>
+
+            <div className="teacher-detail__reset">
+              <label htmlFor="reset-pw" className="teacher-detail__reset-label">
+                Palitan ang password ng mag-aaral
+              </label>
+              <div className="teacher-detail__reset-row">
+                <input
+                  id="reset-pw"
+                  type="text"
+                  className="teacher-search"
+                  placeholder="Bagong password (6+ karakter)"
+                  value={resetPassword}
+                  onChange={(e) => {
+                    setResetPassword(e.target.value);
+                    setResetState({ busy: false, msg: "", ok: false });
+                  }}
+                  autoComplete="off"
+                />
+                <button
+                  type="button"
+                  className="teacher-export__btn"
+                  onClick={handleResetPassword}
+                  disabled={resetState.busy || resetPassword.length < 6}
+                >
+                  {resetState.busy ? "Ipinapalit\u2026" : "I-reset"}
+                </button>
+              </div>
+              {resetState.msg && (
+                <p
+                  className={`teacher-detail__reset-msg ${
+                    resetState.ok ? "is-ok" : "is-error"
+                  }`}
+                  role="status"
+                >
+                  {resetState.msg}
+                </p>
+              )}
             </div>
 
             <div className="teacher-detail__summary">

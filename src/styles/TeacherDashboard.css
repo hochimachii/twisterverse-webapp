@@ -412,3 +412,51 @@
   opacity: 0.7;
   margin-top: 2px;
 }
+
+/* ---------- Student password reset ---------- */
+.teacher-detail__reset {
+  margin: 14px 0 4px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(74, 51, 36, 0.06);
+  border: 1px solid rgba(74, 51, 36, 0.18);
+}
+
+.teacher-detail__reset-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  opacity: 0.8;
+  margin-bottom: 8px;
+}
+
+.teacher-detail__reset-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.teacher-detail__reset-row input { flex: 1; min-width: 160px; }
+
+.teacher-detail__reset-msg {
+  margin: 10px 0 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+/* The success message contains the new password, because the teacher has
+   to read it out to the student. Styled to be noticed, not hidden. */
+.teacher-detail__reset-msg.is-ok {
+  background: rgba(31, 107, 49, 0.12);
+  border: 1px solid rgba(31, 107, 49, 0.4);
+  color: #1c5c2b;
+  font-weight: 700;
+}
+
+.teacher-detail__reset-msg.is-error {
+  background: rgba(160, 40, 30, 0.1);
+  border: 1px solid rgba(160, 40, 30, 0.35);
+  color: #8c2318;
+}

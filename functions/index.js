@@ -217,3 +217,100 @@ exports.transcribe = onCall(
     }
   }
 );
+
+// ---------------------------------------------------------------------
+// resetStudentPassword
+//
+// Students log in with a username mapped to an invented .local domain,
+// so Firebase's own reset email has nowhere to deliver. Children also
+// should not need an inbox to get back into a game. The classroom answer
+// is the one that already happens in practice: the teacher fixes it.
+//
+// Setting a password without knowing the old one requires the Admin SDK,
+// which is why this is a function and not client code.
+//
+// The authorization here is doing real work. firestore.rules currently
+// let ANY teacher read every student document, and school scoping is
+// enforced only in the dashboard UI - so without these checks any
+// teacher could take over any child's account in any school.
+// ---------------------------------------------------------------------
+
+const admin = require("firebase-admin");
+
+admin.initializeApp();
+
+// Firebase Auth's own floor. Stated here so the error is in Filipino and
+// arrives before the write rather than as a raw auth/weak-password.
+const MIN_PASSWORD_LENGTH = 6;
+
+exports.resetStudentPassword = onCall(
+  { enforceAppCheck: ENFORCE_APP_CHECK },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Kailangan mong maka-login.");
+    }
+
+    const { studentUid, newPassword } = request.data || {};
+
+    if (typeof studentUid !== "string" || !studentUid.trim()) {
+      throw new HttpsError("invalid-argument", "Walang piniling mag-aaral.");
+    }
+    if (
+      typeof newPassword !== "string" ||
+      newPassword.length < MIN_PASSWORD_LENGTH
+    ) {
+      throw new HttpsError(
+        "invalid-argument",
+        `Kailangan ng hindi bababa sa ${MIN_PASSWORD_LENGTH} na karakter.`
+      );
+    }
+
+    const db = admin.firestore();
+
+    const teacherSnap = await db.doc(`teachers/${request.auth.uid}`).get();
+    if (!teacherSnap.exists) {
+      throw new HttpsError("permission-denied", "Para lamang ito sa mga guro.");
+    }
+    const teacher = teacherSnap.data();
+
+    // Refuse to touch another TEACHER's account. Without this a teacher
+    // could pass a colleague's uid - or the master account's - and take
+    // it over, since the checks below only ever look at student data.
+    const targetIsTeacher = await db.doc(`teachers/${studentUid}`).get();
+    if (targetIsTeacher.exists) {
+      throw new HttpsError(
+        "permission-denied",
+        "Hindi maaaring i-reset ang account ng ibang guro."
+      );
+    }
+
+    const studentSnap = await db.doc(`users/${studentUid}`).get();
+    if (!studentSnap.exists) {
+      throw new HttpsError("not-found", "Walang nakitang mag-aaral.");
+    }
+    const student = studentSnap.data();
+
+    // Same rule the dashboard applies on screen, enforced here where it
+    // cannot be bypassed: a teacher may only reset their own school's
+    // students. Master access is exempt, matching what it already sees.
+    const isMaster = teacher.isMaster === true;
+    if (isMaster !== true && teacher.school) {
+      if (student.profile?.school !== teacher.school) {
+        throw new HttpsError(
+          "permission-denied",
+          "Wala ang mag-aaral na ito sa paaralan mo."
+        );
+      }
+    }
+
+    await admin.auth().updateUser(studentUid, { password: newPassword });
+
+    // Deliberately records WHO did it and to WHOM, and never the
+    // password itself.
+    console.log(
+      `resetStudentPassword: teacher=${request.auth.uid} student=${studentUid}`
+    );
+
+    return { ok: true, username: studentSnap.data().username || null };
+  }
+);

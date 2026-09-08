@@ -6,8 +6,14 @@
 // "plaintext passwords" issue flagged earlier in the project.
 
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { db } from "../firebase";
+import { getFunctions, httpsCallable } from "firebase/functions";
+import app, { db } from "../firebase";
 import { signUp, signIn } from "./authService";
+
+// MUST match REGION in functions/index.js. The Functions SDK defaults to
+// us-central1, so a mismatch fails as an opaque CORS error that mentions
+// nothing about regions.
+const FUNCTIONS_REGION = "asia-southeast1";
 
 export async function createTeacher({ name, username, password, school }) {
   const user = await signUp(username, password, "teacher");
@@ -37,4 +43,18 @@ export async function getTeacherByUid(uid) {
   if (!uid) return null;
   const snap = await getDoc(doc(db, "teachers", uid));
   return snap.exists() ? { uid, ...snap.data() } : null;
+}
+
+/** Sets a student's password. Students have no email, so Firebase's own
+ *  reset cannot reach them - a teacher does it instead, which is what
+ *  happens in a classroom anyway.
+ *
+ *  All the authorization lives in the Cloud Function: only a teacher may
+ *  call it, only for a student in their own school, and never for
+ *  another teacher's account. None of that can be enforced from here. */
+export async function resetStudentPassword(studentUid, newPassword) {
+  const fns = getFunctions(app, FUNCTIONS_REGION);
+  const call = httpsCallable(fns, "resetStudentPassword");
+  const res = await call({ studentUid, newPassword });
+  return res.data;
 }
