@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAllStudents, displayName } from "../services/userService";
-import { schoolName } from "../data/schools";
+import { schoolName, SCHOOLS } from "../data/schools";
 import { getAllAttempts } from "../services/attemptsService";
 import {
   buildSummaryCsv,
@@ -92,6 +92,12 @@ export default function TeacherDashboard() {
   const [sectionFilter, setSectionFilter] = useState("");
   const [search, setSearch] = useState("");
   const [selectedUid, setSelectedUid] = useState(null);
+  const [schoolFilter, setSchoolFilter] = useState("");
+
+  // Master access sees every school. It is a flag on the teacher
+  // document, so granting it is a deliberate act rather than something
+  // a name or email happens to match.
+  const isMaster = Boolean(teacher?.isMaster);
 
   // Confirm this is a real, signed-in teacher — reads the actual
   // Firebase Auth session rather than a separate flag, since Firebase
@@ -149,17 +155,30 @@ export default function TeacherDashboard() {
     navigate("/teacher-login");
   };
 
+  // Options come from the students this teacher is allowed to see. Built
+  // from `students` before, which offered a teacher grades and sections
+  // belonging to other schools entirely - they filtered to nothing.
+  const visibleToTeacher = useMemo(() => {
+    if (isMaster) {
+      return schoolFilter
+        ? students.filter((s) => s.profile.school === schoolFilter)
+        : students;
+    }
+    if (!teacher?.school) return students;
+    return students.filter((s) => s.profile.school === teacher.school);
+  }, [students, teacher, isMaster, schoolFilter]);
+
   const grades = useMemo(
-    () => [...new Set(students.map((s) => s.profile.grade).filter(Boolean))].sort(),
-    [students]
+    () => [...new Set(visibleToTeacher.map((s) => s.profile.grade).filter(Boolean))].sort(),
+    [visibleToTeacher]
   );
 
   const sections = useMemo(() => {
     const pool = gradeFilter
-      ? students.filter((s) => s.profile.grade === gradeFilter)
-      : students;
+      ? visibleToTeacher.filter((s) => s.profile.grade === gradeFilter)
+      : visibleToTeacher;
     return [...new Set(pool.map((s) => s.profile.section).filter(Boolean))].sort();
-  }, [students, gradeFilter]);
+  }, [visibleToTeacher, gradeFilter]);
 
   // Exports follow the CURRENT filters, so "Baitang 3 / Seksyon Mabini"
   // on screen is exactly what lands in the spreadsheet. Exporting
@@ -180,7 +199,14 @@ export default function TeacherDashboard() {
       // A teacher only sees students from their own school. Teachers
       // created before schools existed have no school set — they see
       // everyone rather than an empty dashboard.
-      if (teacher?.school && s.profile.school !== teacher.school) return false;
+      //
+      // Master access is exempt, and gets a school dropdown instead so
+      // it can still narrow down when it wants to.
+      if (isMaster) {
+        if (schoolFilter && s.profile.school !== schoolFilter) return false;
+      } else if (teacher?.school && s.profile.school !== teacher.school) {
+        return false;
+      }
       if (gradeFilter && s.profile.grade !== gradeFilter) return false;
       if (sectionFilter && s.profile.section !== sectionFilter) return false;
       if (q) {
@@ -190,7 +216,7 @@ export default function TeacherDashboard() {
       }
       return true;
     });
-  }, [students, gradeFilter, sectionFilter, search, teacher]);
+  }, [students, gradeFilter, sectionFilter, search, teacher, isMaster, schoolFilter]);
 
   const selectedStudent = students.find((s) => s.uid === selectedUid) || null;
   const selectedSummary = selectedStudent
@@ -212,8 +238,14 @@ export default function TeacherDashboard() {
         <header className="dashboard-header">
           <h1 className="dashboard-title">
             Kumusta, {teacher?.name || "Guro"}!
-            {teacher?.school && (
-              <span className="teacher-school-tag">{schoolName(teacher.school)}</span>
+            {isMaster ? (
+              <span className="teacher-school-tag teacher-school-tag--master">
+                Lahat ng Paaralan
+              </span>
+            ) : (
+              teacher?.school && (
+                <span className="teacher-school-tag">{schoolName(teacher.school)}</span>
+              )
             )}
           </h1>
           <button className="header-btn header-btn--signout" onClick={handleSignOut}>
@@ -229,6 +261,27 @@ export default function TeacherDashboard() {
           <>
             {/* FILTERS + SEARCH */}
             <section className="teacher-filters">
+              {isMaster && (
+                <select
+                  value={schoolFilter}
+                  onChange={(e) => {
+                    setSchoolFilter(e.target.value);
+                    // A section only exists within a school, so keep
+                    // neither when the school changes.
+                    setGradeFilter("");
+                    setSectionFilter("");
+                  }}
+                  className="teacher-select"
+                >
+                  <option value="">Lahat ng Paaralan</option>
+                  {SCHOOLS.map((sc) => (
+                    <option key={sc.id} value={sc.id}>
+                      {sc.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+
               <div className="teacher-filters__row">
                 <select
                   value={gradeFilter}
@@ -315,6 +368,11 @@ export default function TeacherDashboard() {
                         <span className="teacher-student-card__meta">
                           {s.profile.grade} &middot; {s.profile.section}
                         </span>
+                        {isMaster && (
+                          <span className="teacher-student-card__school">
+                            {schoolName(s.profile.school)}
+                          </span>
+                        )}
                       </div>
                       <div className="teacher-student-card__stats">
                         <span className="teacher-student-card__percent">

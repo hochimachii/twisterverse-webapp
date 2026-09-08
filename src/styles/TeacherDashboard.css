@@ -394,3 +394,21 @@
   .teacher-export__btn { flex: 1; }
   .teacher-export__note { margin-left: 0; width: 100%; }
 }
+
+/* ---------- Master access ---------- */
+/* Replaces the single-school tag in the header when a teacher can see
+   every school, so it is always obvious which scope is in effect. */
+.teacher-school-tag--master {
+  background: var(--accent, #7a2013);
+  color: #fff;
+}
+
+/* Which school a student belongs to. Only rendered under master access -
+   for a normal teacher every student is from their own school, so the
+   line would be noise. */
+.teacher-student-card__school {
+  display: block;
+  font-size: 0.72rem;
+  opacity: 0.7;
+  margin-top: 2px;
+}

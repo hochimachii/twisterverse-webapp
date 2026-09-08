@@ -22,7 +22,15 @@ export async function validateTeacher(username, password) {
   const user = await signIn(username, password, "teacher");
   const snap = await getDoc(doc(db, "teachers", user.uid));
   const data = snap.exists() ? snap.data() : { name: username, username, school: null };
-  return { uid: user.uid, name: data.name, username: data.username, school: data.school || null };
+  return {
+    uid: user.uid,
+    name: data.name,
+    username: data.username,
+    school: data.school || null,
+    // Master access sees every school. Granted by setting isMaster on
+    // the teacher document, never inferred from a name or email.
+    isMaster: data.isMaster === true
+  };
 }
 
 export async function getTeacherByUid(uid) {
