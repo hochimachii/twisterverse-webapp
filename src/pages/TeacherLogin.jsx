@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createTeacher, validateTeacher } from "../services/teacherService";
-import { friendlyAuthError } from "../services/authService";
+import {
+  friendlyAuthError,
+  canResetPassword,
+  sendPasswordReset
+} from "../services/authService";
 import { SCHOOLS } from "../data/schools";
 import "../styles/LoginPage.css";
 import "../styles/TeacherLogin.css";
@@ -14,10 +18,48 @@ export default function TeacherLogin() {
   const [password, setPassword] = useState("");
   const [school, setSchool] = useState("");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const clearError = () => setError("");
+  const clearError = () => {
+    setError("");
+    setNotice("");
+  };
+
+  // Firebase can only deliver a reset to a real inbox. Usernames map to
+  // an invented .local domain, so for those the link could never arrive -
+  // say that plainly rather than show a success message for mail that
+  // does not exist. Students are reset by their teacher instead.
+  const handleReset = async () => {
+    clearError();
+    const identifier = username.trim();
+
+    if (!identifier) {
+      setError("Ilagay muna ang email ng account mo.");
+      return;
+    }
+    if (!canResetPassword(identifier)) {
+      setError(
+        "Kailangan ng tunay na email para makapag-reset. Ang mga account na username lang ay hindi makakatanggap ng link."
+      );
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await sendPasswordReset(identifier, "teacher");
+      // Deliberately neutral: it must not reveal whether an account
+      // exists for that address.
+      setNotice(
+        "Kung may account sa email na iyan, may naipadalang link para makapagpalit ng password. Tingnan din ang spam folder."
+      );
+    } catch (err) {
+      setError(friendlyAuthError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAuth = async (e) => {
     e.preventDefault();
@@ -69,7 +111,7 @@ export default function TeacherLogin() {
         <main className="form-container form-container--regular" aria-labelledby="teacher-auth-heading">
           <form className="auth-form" onSubmit={handleAuth} noValidate>
             <h2 id="teacher-auth-heading" className="visually-hidden">
-              {isSignup ? "Teacher Sign up" : "Teacher Login"}
+              {isSignup ? "Gumawa ng Account ng Guro" : "Mag-login bilang Guro"}
             </h2>
 
             {isSignup && (
@@ -109,11 +151,11 @@ export default function TeacherLogin() {
             )}
 
             <div className="form-group">
-              <label htmlFor="teacher-username" className="visually-hidden">Username</label>
+              <label htmlFor="teacher-username" className="visually-hidden">Username o Email</label>
               <input
                 id="teacher-username"
                 type="text"
-                placeholder="Username"
+                placeholder="Username o Email"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 onFocus={clearError}
@@ -138,13 +180,30 @@ export default function TeacherLogin() {
 
             <button type="submit" className="primary-btn" disabled={loading} aria-busy={loading}>
               {loading
-                ? (isSignup ? "Creating…" : "Signing in…")
+                ? (isSignup ? "Ginagawa\u2026" : "Pumapasok\u2026")
                 : (isSignup ? "Gumawa ng Account" : "Mag-login")}
             </button>
+
+            {!isSignup && (
+              <button
+                type="button"
+                className="link-btn teacher-reset-link"
+                onClick={handleReset}
+                disabled={loading}
+              >
+                Nakalimutan ang password?
+              </button>
+            )}
 
             {error && (
               <p className="error" role="alert" aria-live="assertive">
                 {error}
+              </p>
+            )}
+
+            {notice && (
+              <p className="form-notice" role="status" aria-live="polite">
+                {notice}
               </p>
             )}
 

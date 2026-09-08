@@ -11,14 +11,40 @@
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
   signOut as firebaseSignOut,
   onAuthStateChanged
 } from "firebase/auth";
 import { auth } from "../firebase";
 
-function usernameToEmail(username, role) {
+function usernameToEmail(identifier, role) {
+  const trimmed = (identifier || "").trim().toLowerCase();
+
+  // A real email address is used as-is. Teachers are adults who have one,
+  // and it is the ONLY way Firebase's own password reset can deliver
+  // anything: the .local domains below are invented and have no mail
+  // server, so a reset sent there goes nowhere.
+  //
+  // Students keep using plain usernames - they have no email, and are
+  // reset by their teacher instead.
+  if (trimmed.includes("@")) return trimmed;
+
   const domain = role === "teacher" ? "twisterverse-teacher.local" : "twisterverse.local";
-  return `${username.trim().toLowerCase()}@${domain}`;
+  return `${trimmed}@${domain}`;
+}
+
+/** True when this identifier can receive a reset link at all. A username
+ *  maps to an invented domain, so Firebase would happily "send" a reset
+ *  that could never arrive - better to say so than to show a success
+ *  message for mail that does not exist. */
+export function canResetPassword(identifier) {
+  return (identifier || "").includes("@");
+}
+
+/** Sends Firebase's own password-reset email. Only meaningful for
+ *  accounts registered with a real address. */
+export async function sendPasswordReset(identifier, role = "teacher") {
+  await sendPasswordResetEmail(auth, usernameToEmail(identifier, role));
 }
 
 /** Creates a new Firebase Auth account for a username/password/role. */

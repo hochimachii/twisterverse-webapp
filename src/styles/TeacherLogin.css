@@ -28,3 +28,28 @@
   color: #fff;
   border-bottom-color: #fff;
 }
+
+/* ---------- Password reset ---------- */
+.teacher-reset-link {
+  display: block;
+  margin: 10px auto 0;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+/* Success/neutral counterpart to .error - a reset confirmation is not a
+   failure and should not be styled like one. */
+.form-notice {
+  margin: 10px 2px 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(31, 107, 49, 0.12);
+  border: 1px solid rgba(31, 107, 49, 0.4);
+  /* Dark green on the light auth card. A near-white was unreadable here:
+     the panel sits on cream, not on the dark page background. */
+  color: #1c5c2b;
+  font-weight: 600;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  text-align: center;
+}
