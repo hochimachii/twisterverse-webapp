@@ -45,6 +45,28 @@ const MODEL = "chirp_2";
 
 const LANGUAGE = "fil-PH";
 
+// Boost for the target words. 15 was measured to work well: it
+// corrected "bebo" to "bibo" and "boom again" to "bumangon" on real
+// audio.
+//
+// DO NOT add the full twister as a phrase here. It was tried, measured,
+// and rejected. Supplying the whole sentence dramatically improves clean
+// audio - a recitation that came back as "liri liri liri liri liri" was
+// transcribed perfectly, dropped "sa" included - but it also lets the
+// decoder snap UNINFORMATIVE audio onto that sentence. Three seconds of
+// white noise transcribed as the exact target, which scores 100%
+// "Perpekto" for a student who never spoke.
+//
+// That is not a tuning problem. It was reproduced identically at boost
+// 20, 8 and 1 - the minimum - so the mere presence of a complete phrase
+// is enough. Individual words cannot do this: the same noise returned
+// only "liri,liwanag,lumilipad", a partial that correctly fails.
+//
+// Any future attempt at sentence-level adaptation needs a noise gate
+// that actually separates speech from non-speech FIRST. Confidence does
+// not: non-speech has measured 0.70 against real speech at 0.71.
+const WORD_BOOST = 15;
+
 // Roughly 4 MB of base64 — vastly more than a five-second clip needs,
 // while staying under the v2 sync-recognize inline limit (10 MB / 60s).
 const MAX_AUDIO_BYTES = 4 * 1024 * 1024;
@@ -134,7 +156,7 @@ exports.transcribe = onCall(
                   phrases: phrases
                     .filter((p) => typeof p === "string" && p.trim())
                     .slice(0, 500) // API caps the phrase count
-                    .map((value) => ({ value, boost: 15 }))
+                    .map((value) => ({ value, boost: WORD_BOOST }))
                 }
               }
             ]
@@ -179,7 +201,8 @@ exports.transcribe = onCall(
         .find((c) => typeof c === "number");
 
       console.log(
-        `transcribe: results=${results.length} confidence=${confidence} ` +
+        `transcribe: uid=${request.auth.uid} results=${results.length} ` +
+          `confidence=${confidence} ` +
           `transcript=${JSON.stringify(transcript)}`
       );
 
