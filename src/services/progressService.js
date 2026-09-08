@@ -68,6 +68,37 @@ export async function hasSeenEnding(uid) {
   return snap.data()?.endingSeen === true;
 }
 
+/** Worlds whose guide-greeting the student has already met.
+ *
+ *  Lives on the progress document for the same reason endingSeen does:
+ *  a "first time" encounter should happen once for a student, not once
+ *  per browser session. It used to sit in sessionStorage, so every new
+ *  tab replayed every character introduction. */
+export async function getSeenIntros(uid) {
+  if (!uid) return readLocalProgress().seenIntros || [];
+  const snap = await getDoc(doc(db, "progress", uid));
+  const seen = snap.data()?.seenIntros;
+  return Array.isArray(seen) ? seen : [];
+}
+
+export async function markIntroSeen(uid, worldId) {
+  if (!uid) {
+    const progress = readLocalProgress();
+    const seen = Array.isArray(progress.seenIntros) ? progress.seenIntros : [];
+    if (!seen.includes(worldId)) seen.push(worldId);
+    progress.seenIntros = seen;
+    writeLocalProgress(progress);
+    return;
+  }
+  const snap = await getDoc(doc(db, "progress", uid));
+  const seen = snap.data()?.seenIntros;
+  const next = Array.isArray(seen) ? seen.slice() : [];
+  if (next.includes(worldId)) return;
+  next.push(worldId);
+  // merge:true so this never disturbs the world entries alongside it.
+  await setDoc(doc(db, "progress", uid), { seenIntros: next }, { merge: true });
+}
+
 export async function markEndingSeen(uid) {
   if (!uid) {
     const progress = readLocalProgress();

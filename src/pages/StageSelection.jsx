@@ -4,9 +4,13 @@ import "../styles/StageSelection.css";
 import pageBg from "../assets/login/background.PNG";
 import { WORLDS, getWorld } from "../data/worlds";
 import { useAuth } from "../context/AuthContext";
-import { loadProgress } from "../services/progressService";
+import { loadProgress, getSeenIntros, markIntroSeen } from "../services/progressService";
 
 const SEEN_UNLOCKS_KEY = "seenUnlockedWorldCount";
+// Cache only. The authoritative list is on the student's progress
+// document (see progressService.getSeenIntros), so a guide is met once
+// per ACCOUNT rather than once per browser session. This answers
+// instantly so the greeting never flashes in after the map has drawn.
 const SEEN_INTROS_KEY = "seenWorldIntros";
 
 function countUnlockedWorlds(progress) {
@@ -160,6 +164,9 @@ export default function StageSelection() {
   const [progress, setProgress] = useState({});
   const [newlyUnlocked, setNewlyUnlocked] = useState(null); // world object or null
   const [introWorld, setIntroWorld] = useState(null); // world object or null
+  // null until the student's real list has loaded - showing a greeting
+  // before then is what made them reappear at random.
+  const [seenIntros, setSeenIntros] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -187,23 +194,63 @@ export default function StageSelection() {
     };
   }, [uid]);
 
-  // Show each world's guide-greeting scene the first time it's viewed
-  // this session (including world 1 on a brand-new visit).
+  // Load which guides this student has already met. Cache first so the
+  // common case costs no network wait, then reconcile with the account.
   useEffect(() => {
-    const seen = JSON.parse(sessionStorage.getItem(SEEN_INTROS_KEY) || "[]");
-    if (!seen.includes(selectedWorld)) {
-      setIntroWorld(getWorld(selectedWorld));
+    let cancelled = false;
+    let cached = [];
+    try {
+      cached = JSON.parse(sessionStorage.getItem(SEEN_INTROS_KEY) || "[]");
+    } catch {
+      cached = [];
     }
-  }, [selectedWorld]);
+    setSeenIntros(cached);
 
-  const dismissIntro = () => {
-    const seen = JSON.parse(sessionStorage.getItem(SEEN_INTROS_KEY) || "[]");
-    if (introWorld && !seen.includes(introWorld.id)) {
-      seen.push(introWorld.id);
-      sessionStorage.setItem(SEEN_INTROS_KEY, JSON.stringify(seen));
+    getSeenIntros(uid)
+      .then((stored) => {
+        if (cancelled) return;
+        const merged = [...new Set([...cached, ...stored])];
+        setSeenIntros(merged);
+        try {
+          sessionStorage.setItem(SEEN_INTROS_KEY, JSON.stringify(merged));
+        } catch {
+          // Storage unavailable - the account list is still authoritative.
+        }
+      })
+      .catch(() => {
+        // Offline: fall back to the cache rather than replaying every
+        // greeting the student has already sat through.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [uid]);
+
+  // Show a world's guide-greeting the first time this student meets it.
+  //
+  // Marked seen on SHOW, not on dismiss. Previously it was recorded only
+  // when the student pressed through, so leaving the page - or the
+  // unlock celebration taking priority - left it unrecorded and it
+  // reappeared later, which is what made the encounters look random.
+  useEffect(() => {
+    if (seenIntros === null) return; // still loading; don't guess
+    if (seenIntros.includes(selectedWorld)) return;
+
+    setIntroWorld(getWorld(selectedWorld));
+    setSeenIntros((prev) => [...(prev || []), selectedWorld]);
+    try {
+      const next = [...new Set([...seenIntros, selectedWorld])];
+      sessionStorage.setItem(SEEN_INTROS_KEY, JSON.stringify(next));
+    } catch {
+      // Non-fatal - the account write below is what actually persists.
     }
-    setIntroWorld(null);
-  };
+    markIntroSeen(uid, selectedWorld).catch(() => {
+      // The session cache still holds it for this device.
+    });
+  }, [selectedWorld, seenIntros, uid]);
+
+  const dismissIntro = () => setIntroWorld(null);
 
   const completedLevels = progress[`world${selectedWorld}`]?.levels || [];
   const currentWorld = getWorld(selectedWorld);
