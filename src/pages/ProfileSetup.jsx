@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import "../styles/ProfileSetup.css";
 import backgroundImg from "../assets/login/background.PNG";
 import { avatarSrc, AVATAR_OPTIONS } from "../data/avatars";
-import { SCHOOLS } from "../data/schools";
+import { SCHOOLS, gradesFor, sectionsFor } from "../data/schools";
 
 export default function ProfileSetup() {
   const { uid, username } = useAuth();
@@ -17,6 +17,26 @@ export default function ProfileSetup() {
   const [gender, setGender] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  // Grade and section are driven by the chosen school, so a student can
+  // only ever land on a section that actually exists on their roster.
+  const grades = gradesFor(school);
+  const sections = sectionsFor(school, grade);
+
+  // Changing school invalidates both; changing grade invalidates the
+  // section. Without this a student could pick 7-Pascal at Taguig
+  // Science, switch school, and silently keep a section the new school
+  // has never heard of.
+  const handleSchoolChange = (value) => {
+    setSchool(value);
+    setGrade("");
+    setSection("");
+  };
+
+  const handleGradeChange = (value) => {
+    setGrade(value);
+    setSection("");
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -89,7 +109,7 @@ export default function ProfileSetup() {
 
           <select
             value={school}
-            onChange={(e) => setSchool(e.target.value)}
+            onChange={(e) => handleSchoolChange(e.target.value)}
             required
           >
             <option value="">Piliin ang Paaralan</option>
@@ -100,20 +120,37 @@ export default function ProfileSetup() {
             ))}
           </select>
 
-          <input
-            type="text"
-            placeholder="Baitang"
+          <select
             value={grade}
-            onChange={(e) => setGrade(e.target.value)}
+            onChange={(e) => handleGradeChange(e.target.value)}
+            disabled={!school}
             required
-          />
-          <input
-            type="text"
-            placeholder="Seksyon"
+          >
+            <option value="">
+              {school ? "Piliin ang Baitang" : "Pumili muna ng paaralan"}
+            </option>
+            {grades.map((g) => (
+              <option key={g} value={g}>
+                Baitang {g}
+              </option>
+            ))}
+          </select>
+
+          <select
             value={section}
             onChange={(e) => setSection(e.target.value)}
+            disabled={!grade}
             required
-          />
+          >
+            <option value="">
+              {grade ? "Piliin ang Seksyon" : "Pumili muna ng baitang"}
+            </option>
+            {sections.map((sec) => (
+              <option key={sec} value={sec}>
+                {sec}
+              </option>
+            ))}
+          </select>
           <select
             value={gender}
             onChange={(e) => setGender(e.target.value)}
