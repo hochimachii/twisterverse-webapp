@@ -70,12 +70,6 @@ export default function LoginPage() {
         backgroundPosition: "center"
       }}
     >
-      {/* Art card for the split layout on landscape screens. Phones show
-          this art as the page background instead, so it is hidden there.
-          It has to be a direct child of .login-wrapper: the CSS takes the
-          image with background-image: inherit. */}
-      <div className="login-art" aria-hidden="true" />
-
       <div className="login-overlay"> {/* optional dim layer for readability (style in CSS) */}
 
         <img src={logoImg} alt="TwisterVerse" className="login-logo" />

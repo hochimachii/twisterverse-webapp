@@ -36,7 +36,7 @@ function AppRoutes() {
   // page stylesheets size themselves against - removing the wrapper would
   // silently switch off all of their responsive rules. Screens used to be
   // squeezed into a phone-shaped column on desktop; each now lays itself
-  // out per platform instead (split layouts for the art scenes). The
+  // out per platform instead. The
   // teacher flow is built for a wide screen and doesn't use it. See
   // AppFrame.css.
   const isTeacherView = location.pathname.startsWith("/teacher");

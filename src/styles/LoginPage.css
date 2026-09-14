@@ -309,59 +309,28 @@ body {
   .auth-form { padding: 20px 18px 16px; gap: 12px; }
 }
 
-/* ---------- Split layout: landscape screens wider than a phone ----------
-   The scenery is portrait 9:16, so on a landscape screen it gets a card
-   of its own, shown whole, and the logo and form stand beside it over a
-   blurred copy of the same art. Phones and portrait tablets keep the
-   layered layout above. The breakpoint matches the other art scenes
-   (TwisterActivity, OpeningScene, EndingScene). */
-.login-art { display: none; }
+/* ---------- Landscape screens wider than a phone ----------
+   Unlike the story scenes, which split into an art card and a panel,
+   the login keeps its scenery full-screen. Cover crops the portrait art
+   to a middle band on a landscape screen, but nothing on the login is
+   positioned against that art, so the crop costs nothing.
 
+   The foreground is what changes. The phone layout pins the logo near the
+   top and the form near the bottom; on a short landscape screen those two
+   meet and overlap. Here they stack as one group in the middle instead.
+   Phones and portrait tablets keep the layout above. Same breakpoint as
+   the other art scenes. */
 @media (orientation: landscape) {
   @container app (min-width: 641px) {
     .login-wrapper {
-      --split-pad: clamp(16px, 4vh, 40px);
-      --art-h: calc(100vh - 2 * var(--split-pad));
-      display: grid;
-      grid-template-columns: auto minmax(0, 440px);
-      column-gap: clamp(28px, 5vw, 88px);
-      justify-content: center;
-      align-content: center;
-      align-items: center;
-      /* Grows instead of clipping when the panel is taller than a short
-         landscape phone; overflow:hidden then only trims the blur. */
+      /* Grows instead of clipping when the group is taller than a short
+         landscape phone. */
       height: auto;
       min-height: 100vh;
-      padding: var(--split-pad);
+      padding: clamp(16px, 4vh, 40px);
     }
 
-    .login-wrapper::before {
-      content: "";
-      position: absolute;
-      inset: -48px;
-      background-image: inherit;
-      background-size: cover;
-      background-position: center;
-      filter: blur(26px) brightness(0.6) saturate(1.1);
-      pointer-events: none;
-    }
-
-    .login-art {
-      display: block;
-      position: relative;
-      z-index: 1;
-      height: var(--art-h);
-      aspect-ratio: 9 / 16;
-      max-width: 44vw;
-      background-image: inherit;
-      background-size: cover;
-      background-position: center;
-      border: 3px solid var(--card-border);
-      border-radius: 26px;
-      box-shadow: 0 26px 60px rgba(0, 0, 0, 0.5);
-    }
-
-    /* The right-hand panel: logo over the form. */
+    /* The centred group: logo over the form. */
     .login-overlay {
       position: relative;
       z-index: 2;
@@ -369,11 +338,13 @@ body {
       flex-direction: column;
       align-items: center;
       gap: clamp(6px, 2vh, 20px);
+      width: 100%;
+      max-width: 440px;
     }
 
     /* logo.PNG is square, but its artwork only spans the middle 62% of
        the height (measured: rows 19%-81%). A 3:2 box with cover trims that
-       transparent padding, so it doesn't push the form down the panel.
+       transparent padding, so it doesn't push the form down the screen.
        Width, not max-height, carries the short-screen limit: capping the
        height alone would make the box wider than 3:2 and cover would
        then crop the artwork itself. 48vh wide = 32vh tall. */
@@ -384,7 +355,7 @@ body {
       aspect-ratio: 3 / 2;
       object-fit: cover;
       transform: none;
-      animation-name: logoSettleSplit;
+      animation-name: logoSettleInFlow;
     }
 
     .form-container {
@@ -398,9 +369,9 @@ body {
 }
 
 /* The base animation carries translateX(-50%) for the absolutely centred
-   logo; in the panel it is in normal flow, so that shift would push it
-   half its width off to the left. */
-@keyframes logoSettleSplit {
+   logo; in the stacked group it is in normal flow, so that shift would
+   push it half its width off to the left. */
+@keyframes logoSettleInFlow {
   from { opacity: 0; transform: translateY(-14px) scale(0.96); }
   to { opacity: 1; transform: none; }
 }
