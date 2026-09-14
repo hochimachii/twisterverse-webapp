@@ -39,15 +39,16 @@ function AppRoutes() {
   const isTeacherView = location.pathname.startsWith("/teacher");
 
   // Art-led scenes stay phone-framed on wide screens: every background is
-  // portrait 9:16, and a landscape viewport crops 61-68% of it. They get
-  // split layouts next; until then the frame is what keeps them intact.
-  // Card screens are mostly UI over decorative scenery, so they go full
-  // width and lay themselves out per platform.
+  // portrait 9:16, and a landscape viewport crops 61-68% of it. Each one
+  // leaves this list when it gets a split layout of its own (the activity
+  // has - see TwisterActivity.css); until then the frame is what keeps
+  // the art intact. Card screens are mostly UI over decorative scenery,
+  // so they go full width and lay themselves out per platform.
   //
   // Every student route still sits inside .app-frame, because the page
   // stylesheets use CONTAINER queries against it - removing the wrapper
   // would silently switch off all of their responsive rules.
-  const FRAMED_ROUTES = ["/", "/login", "/intro", "/activity", "/ending"];
+  const FRAMED_ROUTES = ["/", "/login", "/intro", "/ending"];
   const isFramed = !isTeacherView && FRAMED_ROUTES.includes(location.pathname);
 
   return (

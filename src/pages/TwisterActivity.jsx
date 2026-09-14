@@ -666,26 +666,32 @@ export default function TwisterActivity() {
 
   return (
     <div className="activity-scene" style={{ backgroundImage: `url(${worldData.cover})` }}>
-      <button className="activity-back-btn" onClick={() => navigate("/stages")}>
-        {"\u2B05\uFE0F"} Bumalik sa Mundo
-      </button>
+      {/* The art panel. On phones it generates no box at all (display:
+          contents), so the scene lays out exactly as it always has; on
+          landscape screens it becomes the portrait art card of the split
+          layout. See TwisterActivity.css. */}
+      <div className="activity-stage">
+        <button className="activity-back-btn" onClick={() => navigate("/stages")}>
+          {"\u2B05\uFE0F"} Bumalik sa Mundo
+        </button>
 
-      {!showValidation && !isActive && !checking ? (
-        worldData.guideArt ? (
-          <img src={worldData.guideArt} alt="" aria-hidden="true" className="activity-guide-standee" />
+        {!showValidation && !isActive && !checking ? (
+          worldData.guideArt ? (
+            <img src={worldData.guideArt} alt="" aria-hidden="true" className="activity-guide-standee" />
+          ) : (
+            <div className="activity-guide-standee activity-guide-standee--pending">
+              <span aria-hidden="true">{worldData.icon}</span>
+            </div>
+          )
         ) : (
-          <div className="activity-guide-standee activity-guide-standee--pending">
-            <span aria-hidden="true">{worldData.icon}</span>
-          </div>
-        )
-      ) : (
-        <img
-          src={TWISTY_SPRITES[spriteKey]}
-          alt=""
-          aria-hidden="true"
-          className={`twisty-standee twisty-standee--${spriteKey} ${isActive ? "twisty-standee--listening" : ""}`}
-        />
-      )}
+          <img
+            src={TWISTY_SPRITES[spriteKey]}
+            alt=""
+            aria-hidden="true"
+            className={`twisty-standee twisty-standee--${spriteKey} ${isActive ? "twisty-standee--listening" : ""}`}
+          />
+        )}
+      </div>
 
       <div className={`dialogue-box dialogue-box--${feedbackTier || "default"}`}>
         <span className="dialogue-tag">

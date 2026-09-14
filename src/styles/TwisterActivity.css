@@ -20,6 +20,15 @@
   justify-content: flex-end;
 }
 
+/* The art panel: back button + standee. It generates no box by default,
+   so on phones and portrait tablets its children lay out as direct
+   children of .activity-scene - exactly as they did before this wrapper
+   existed. The split layout at the end of this file makes it a real
+   element. */
+.activity-stage {
+  display: contents;
+}
+
 /* Floating back button, top-left over the scene */
 .activity-back-btn {
   position: absolute;
@@ -158,6 +167,17 @@
     margin-bottom: 26px;
     border: 3px solid var(--gold);
     border-top: 3px solid var(--gold);
+  }
+
+  /* From here the box is a 640px card in the middle of the screen, not a
+     full-width dock, so a standee pinned 6% from the screen edge stood
+     off the end of it - and Twisty's lower edge, which is meant to tuck
+     behind the box, could hang out past its corner. Line the characters
+     up with the box's left edge instead. Inside the split layout's art
+     card the calc goes negative and 6% wins, as on a phone. */
+  .activity-guide-standee,
+  .twisty-standee {
+    margin-left: max(6%, calc((100% - 640px) / 2));
   }
 }
 
@@ -575,4 +595,126 @@
 
 .score-penalty {
   color: #ffb3a7;
+}
+
+/* ---------- Split layout: landscape screens, 760px and wider ----------
+   Every world background is portrait 9:16. Full-bleed on a landscape
+   screen, cover crops most of it away; the previous answer was a
+   phone-shaped frame with dark bars filling the rest of the screen.
+
+   Here the art gets a portrait card of its own - shown whole, with the
+   guide or Twisty standing in it - and the dialogue gets the room beside
+   it, with the twister set large enough to read aloud from a desk.
+
+   Phones and portrait tablets never match (orientation), and neither
+   does anything under 760px, where a side panel would be too cramped to
+   read. Those keep the stacked scene above. */
+@media (orientation: landscape) {
+  @container app (min-width: 760px) {
+    .activity-scene {
+      --split-pad: clamp(16px, 4vh, 40px);
+      --art-h: calc(100vh - 2 * var(--split-pad));
+      display: grid;
+      grid-template-columns: auto minmax(0, 640px);
+      column-gap: clamp(24px, 3.5vw, 56px);
+      justify-content: center;
+      align-content: center;
+      align-items: center;
+      padding: var(--split-pad);
+      background-color: #14100c;
+    }
+
+    /* The same world art, blurred and dimmed, fills the screen behind
+       both panels, so the sides read as the world rather than as empty
+       bars. inherit picks up the scene's inline background-image; the
+       negative inset keeps the blur's soft edge off-screen. */
+    .activity-scene::before {
+      content: "";
+      position: absolute;
+      inset: -48px;
+      background-image: inherit;
+      background-size: cover;
+      background-position: center;
+      filter: blur(26px) brightness(0.5) saturate(1.1);
+      pointer-events: none;
+    }
+
+    .activity-stage {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      height: var(--art-h);
+      aspect-ratio: 9 / 16;
+      /* On squarer windows this keeps the dialogue column readable; the
+         art then loses a little at its sides instead. */
+      max-width: 44vw;
+      background-image: inherit;
+      background-size: cover;
+      background-position: center;
+      border: 3px solid var(--gold);
+      border-radius: 26px;
+      /* Also hides the bottom of Twisty's cropped sprite - the job the
+         dialogue box does on a phone. */
+      overflow: hidden;
+      box-shadow: 0 26px 60px rgba(0, 0, 0, 0.55);
+    }
+
+    /* Unchanged on a laptop; on a landscape phone the card is only ~200px
+       wide and the full-size pill nearly spanned it. */
+    .activity-back-btn {
+      top: clamp(10px, 2vh, 18px);
+      left: clamp(10px, 2vh, 18px);
+      font-size: clamp(0.72rem, 1.9vh, 0.85rem);
+      padding: 0.6em 1em;
+    }
+
+    /* Sized to the card, not the viewport: the vw-based widths above come
+       out at 250px on any laptop, which is wider than the whole card on a
+       landscape phone. */
+    .activity-guide-standee { width: min(300px, 60%); }
+    .twisty-standee { width: min(260px, 62%); }
+
+    .dialogue-box {
+      margin: 0;
+      max-width: none;
+      padding: 28px 32px 30px;
+      border-radius: 26px;
+    }
+
+    .dialogue-tag {
+      font-size: 0.82rem;
+      padding: 5px 14px;
+      margin-bottom: 14px;
+    }
+
+    /* The line the student reads aloud. Scales with screen height, like
+       the art card beside it. */
+    .dialogue-text {
+      font-size: clamp(1.15rem, 3.3vh, 1.9rem);
+      line-height: 1.45;
+    }
+    .dialogue-text--feedback { font-size: clamp(1.1rem, 2.8vh, 1.55rem); }
+    .dialogue-sub {
+      font-size: clamp(0.9rem, 1.9vh, 1.05rem);
+      margin-top: 8px;
+    }
+
+    .dialogue-controls { margin-top: 20px; }
+    .dialogue-controls button {
+      padding: 12px 22px;
+      font-size: 1rem;
+    }
+    .recite-timer { height: 26px; }
+    .recite-timer__label { font-size: 0.85rem; }
+
+    /* Missing-twister state has no art card: centre it across both
+       columns, above the blurred backdrop. */
+    .activity-empty {
+      grid-column: 1 / -1;
+      position: relative;
+      z-index: 1;
+    }
+  }
 }
