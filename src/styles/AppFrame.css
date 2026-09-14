@@ -9,9 +9,9 @@
  * away. The first fix squeezed the whole app into a 9:16 column on wide
  * screens, which kept the art intact but left most of a laptop screen
  * dark. Screens now adapt per platform instead: card screens use the full
- * width, and the art scenes (login, opening, activity, ending) get split
- * layouts - the art in a portrait card, the UI beside it - so the frame
- * is gone.
+ * width, and every art scene (login, opening, activity, meet-the-guide,
+ * ending) gets a split layout on landscape screens - the art in a
+ * portrait card, the UI beside it - so the frame is gone.
  *
  * The teacher dashboard never sat inside this wrapper - it is a data
  * table built for a wide screen.
@@ -26,35 +26,4 @@
      rules silently stops applying. */
   container-type: inline-size;
   container-name: app;
-}
-
-/* 9/16 = 0.5625: from here on the screen is wider than the art. */
-@media (min-aspect-ratio: 9/16) {
-  /* The meet-the-guide scene (StageSelection) is art-led but has no split
-     layout of its own. Full-screen with cover, a wide screen would crop
-     its portrait world art down to a middle band.
-
-     Contain shows the art whole in a centred column over a dark surround
-     - while the scene itself still spans the viewport. That matters:
-     squeezing the element into a column instead would leave the level
-     buttons clickable through the dark sides. */
-  .app-frame .guide-scene {
-    background-color: #14100c;
-    background-size: contain;
-  }
-
-  /* Sized to the art column, not the viewport, so the card sits on the
-     artwork. The floor keeps it readable on short landscape screens,
-     where that column is only ~220px wide. */
-  .app-frame .guide-dialogue {
-    max-width: max(320px, calc(100vh * 9 / 16 - 32px));
-  }
-
-  /* Its -4% margin resolves against the scene's WIDTH: 19px on a phone-
-     width scene, but 58px across a 1440px screen, burying the guide's feet
-     behind the dialogue. Same overlap as on a phone, against the art
-     column. */
-  .app-frame .guide-scene__standee:not(.guide-scene__standee--pending) {
-    margin-bottom: calc(100vh * 9 / 16 * -0.04);
-  }
 }

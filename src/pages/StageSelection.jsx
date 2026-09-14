@@ -360,18 +360,24 @@ export default function StageSelection() {
           role="status"
           aria-live="polite"
         >
-          {introWorld.guideArt ? (
-            <img
-              src={introWorld.guideArt}
-              alt=""
-              aria-hidden="true"
-              className="guide-scene__standee"
-            />
-          ) : (
-            <div className="guide-scene__standee guide-scene__standee--pending">
-              <span aria-hidden="true">{introWorld.icon}</span>
-            </div>
-          )}
+          {/* The art panel. On phones it generates no box (display:
+              contents), so the guide stands on the scene as always; on
+              landscape screens it becomes the portrait art card of the
+              split layout. See StageSelection.css. */}
+          <div className="guide-scene__stage">
+            {introWorld.guideArt ? (
+              <img
+                src={introWorld.guideArt}
+                alt=""
+                aria-hidden="true"
+                className="guide-scene__standee"
+              />
+            ) : (
+              <div className="guide-scene__standee guide-scene__standee--pending">
+                <span aria-hidden="true">{introWorld.icon}</span>
+              </div>
+            )}
+          </div>
 
           <div className="guide-dialogue">
             <span className="guide-dialogue__tag">

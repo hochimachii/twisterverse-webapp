@@ -396,6 +396,13 @@
   animation: unlockFadeIn 0.3s ease forwards;
 }
 
+/* Wraps the standee. No box by default, so the standee is still a direct
+   flex item of .guide-scene; the split layout at the end of this file
+   makes it the art card. */
+.guide-scene__stage {
+  display: contents;
+}
+
 .guide-scene__standee {
   position: relative;
   z-index: 1;
@@ -447,6 +454,13 @@
     border-radius: 22px;
     margin-bottom: 26px;
     border: 3px solid var(--gold);
+  }
+
+  /* -4% resolves against the scene's WIDTH: about 16px of the guide
+     tucked behind the dialogue on a phone, but 33px on a portrait tablet,
+     which buries their feet. Keep the phone's overlap. */
+  .guide-scene__standee:not(.guide-scene__standee--pending) {
+    margin-bottom: -16px;
   }
 }
 
@@ -576,5 +590,101 @@
     grid-area: levels;
     grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
     align-content: start;
+  }
+}
+
+/* ---------- Meet-the-guide scene: split layout ----------
+   Same treatment as the activity it leads into (TwisterActivity.css):
+   on a landscape screen the world art gets a portrait card, shown whole
+   with the guide standing in it, and the greeting sits beside it over a
+   blurred copy of the art. Phones and portrait tablets keep the scene
+   above. Same breakpoint as the other art scenes.
+
+   One difference from the activity: this scene is a FIXED overlay, not
+   part of the page, so it cannot grow and let the document scroll. */
+@media (orientation: landscape) {
+  @container app (min-width: 641px) {
+    .guide-scene {
+      --split-pad: clamp(16px, 4vh, 40px);
+      --art-h: calc(100vh - 2 * var(--split-pad));
+      display: grid;
+      grid-template-columns: auto minmax(0, 640px);
+      /* 1fr is minmax(auto, 1fr): the row fills the screen, but grows
+         past it if the greeting ever outgrows a short landscape phone.
+         The overlay then scrolls from the top - where centring the
+         content instead would push its start out of reach. */
+      grid-template-rows: 1fr;
+      column-gap: clamp(24px, 3.5vw, 56px);
+      justify-content: center;
+      align-items: center;
+      padding: var(--split-pad);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      background-color: #14100c;
+    }
+
+    /* Blurred, dimmed copy of the world art behind both panels. FIXED,
+       not absolute, so it stays put if the overlay scrolls. */
+    .guide-scene::before {
+      content: "";
+      position: fixed;
+      inset: -48px;
+      background-image: inherit;
+      background-size: cover;
+      background-position: center;
+      filter: blur(26px) brightness(0.5) saturate(1.1);
+      pointer-events: none;
+    }
+
+    .guide-scene__stage {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      height: var(--art-h);
+      aspect-ratio: 9 / 16;
+      max-width: 44vw;
+      background-image: inherit;
+      background-size: cover;
+      background-position: center;
+      border: 3px solid var(--gold);
+      border-radius: 26px;
+      overflow: hidden;
+      box-shadow: 0 26px 60px rgba(0, 0, 0, 0.55);
+    }
+
+    /* Stands on the foot of the card: there is no dialogue box under it
+       to tuck behind any more. Sized to the card, not the viewport. */
+    .guide-scene__standee:not(.guide-scene__standee--pending) {
+      width: min(300px, 60%);
+      margin-bottom: 0;
+    }
+
+    .guide-dialogue {
+      margin: 0;
+      max-width: none;
+      padding: 28px 32px 30px;
+      border-radius: 26px;
+    }
+
+    .guide-dialogue__tag {
+      font-size: 0.82rem;
+      padding: 5px 14px;
+      margin-bottom: 14px;
+    }
+
+    /* Greetings run 118-159 characters, so this can be generous. Scales
+       with screen height, like the card beside it. */
+    .guide-dialogue__line {
+      font-size: clamp(1rem, 2.9vh, 1.55rem);
+      line-height: 1.55;
+    }
+
+    .guide-dialogue__controls { margin-top: 20px; }
+    .guide-dialogue__controls button {
+      padding: 13px 26px;
+      font-size: 1rem;
+    }
   }
 }
