@@ -32,6 +32,10 @@ function AppRoutes() {
     musicSrc = "/music/ending.mp3";
   }
 
+  // The opening scene is narrated (recorded voice per beat), so the music
+  // drops underneath it and comes back up on the way to the dashboard.
+  const musicDucked = location.pathname === "/intro";
+
   // Every student screen sits inside .app-frame, the query container the
   // page stylesheets size themselves against - removing the wrapper would
   // silently switch off all of their responsive rules. Screens used to be
@@ -43,7 +47,7 @@ function AppRoutes() {
 
   return (
     <>
-      <MusicPlayer src={musicSrc} />
+      <MusicPlayer src={musicSrc} ducked={musicDucked} />
       <div className={isTeacherView ? undefined : "app-frame"}>
       <Routes>
         {/* Entry route */}

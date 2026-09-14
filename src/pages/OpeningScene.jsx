@@ -1,7 +1,17 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import twistyNeutral from "../assets/twisty/twisty-neutral.PNG";
 import twistyHappy from "../assets/twisty/twisty-happy.PNG";
+// Recorded narration, one file per beat, in beat order ("Opening 1-7"
+// from the client). Durations track each beat's text length, which is
+// how the order was checked: 10.3s, 10.0s, 14.0s, 5.2s, 9.4s, 16.9s, 9.3s.
+import voice1 from "../assets/voices/opening-1.mp3";
+import voice2 from "../assets/voices/opening-2.mp3";
+import voice3 from "../assets/voices/opening-3.mp3";
+import voice4 from "../assets/voices/opening-4.mp3";
+import voice5 from "../assets/voices/opening-5.mp3";
+import voice6 from "../assets/voices/opening-6.mp3";
+import voice7 from "../assets/voices/opening-7.mp3";
 import "../styles/OpeningScene.css";
 
 // The opening scene, straight from the client's script (FTTEBA-Content,
@@ -25,44 +35,51 @@ const BEATS = [
     book: "closed",
     text:
       "Sa isang tahimik na hapon sa silid-aklatan ng paaralan, may isang batang masayahin at mausisa na nagngangalang Twisty.",
-    sprite: "neutral"
+    sprite: "neutral",
+    voice: voice1
   },
   {
     book: "closed",
     text:
       "Kilala siya sa kanilang klase bilang batang mahilig maglaro ng mga salita at magbaluktot ng dila sa kahit anong tongue twister.",
-    sprite: "neutral"
+    sprite: "neutral",
+    voice: voice2
   },
   {
     book: "glowing",
     text:
       "Habang naglalakad siya sa pagitan ng matataas na estante ng mga aklat, may napansin siyang kakaiba \u2014 isang lumang aklat na kumikislap, parang may sariling ilaw sa dilim ng silid.",
-    sprite: "neutral"
+    sprite: "neutral",
+    voice: voice3
   },
   {
     book: "glowing",
     speaker: "Twisty",
     text: "\u201CHmm\u2026 ano kaya ito?\u201D",
-    sprite: "neutral"
+    sprite: "neutral",
+    voice: voice4
   },
   {
     book: "map",
     text:
       "Dahan-dahan niyang binuksan ang aklat at, sa isang kisap-mata, lumitaw ang isang makulay at umiikot na mapa.",
-    sprite: "happy"
+    sprite: "happy",
+    voice: voice5
   },
   {
     book: "map",
     text:
       "\u201CMaligayang pagdating sa Twisterverse! Handang-handa ka na bang harapin ang apat na mundo ng mga salita? Bawat hakbang ay may hamon\u2026 bawat salita ay may lihim\u2026 at bawat dila ay sinusubok.\u201D",
-    sprite: "happy"
+    sprite: "happy",
+    voice: voice6
   },
   {
     book: "map",
     speaker: "Twisty",
     text:
       "\u201CSige, kaya ko \u2018to. Pero\u2026 kaya mo rin ba, kaibigan, ulitin ang bawat tunog nang mabilis at malinaw?\u201D",
-    sprite: "happy"
+    sprite: "happy",
+    voice: voice7
   }
 ];
 
@@ -198,8 +215,71 @@ function MapIllustration() {
 export default function OpeningScene() {
   const navigate = useNavigate();
   const [beatIndex, setBeatIndex] = useState(0);
+  // "playing" | "idle" | "blocked". Blocked means the browser refused to
+  // start audio because nothing on the page had been tapped yet - iOS
+  // Safari does this after the profile save's network round-trip.
+  const [voiceState, setVoiceState] = useState("idle");
+  const voiceRef = useRef(null);
   const beat = BEATS[beatIndex];
   const isLastBeat = beatIndex === BEATS.length - 1;
+
+  /** Plays one beat's narration from the start, cutting off whatever line
+   *  is playing. Called straight from click handlers wherever it can be:
+   *  iOS Safari only lets audio start inside a user gesture, and a React
+   *  effect after the render is not reliably inside one. */
+  const playVoice = useCallback((index) => {
+    const audio = voiceRef.current;
+    const src = BEATS[index]?.voice;
+    if (!audio || !src) return;
+    audio.pause();
+    if (audio.getAttribute("src") !== src) {
+      audio.src = src;
+    } else {
+      audio.currentTime = 0;
+    }
+    const attempt = audio.play();
+    if (attempt && typeof attempt.catch === "function") {
+      attempt.catch((err) => {
+        // AbortError just means a newer line replaced this one before it
+        // started - normal when tapping through quickly. Only a refusal
+        // needs the student's help.
+        if (err && err.name === "NotAllowedError") setVoiceState("blocked");
+      });
+    }
+  }, []);
+
+  // The first line starts with the scene. Most browsers count the taps
+  // that created the profile as permission; where that isn't enough the
+  // line lands in "blocked" and the speaker button asks for a tap.
+  useEffect(() => {
+    playVoice(0);
+  }, [playVoice]);
+
+  // Mobile browsers keep audio playing in a backgrounded tab (see
+  // MusicPlayer), so the narration pauses with the student and picks up
+  // where it was when they return. Leaving the scene stops it outright.
+  useEffect(() => {
+    const audio = voiceRef.current;
+    if (!audio) return undefined;
+    let resumeOnReturn = false;
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        resumeOnReturn = !audio.paused && !audio.ended;
+        audio.pause();
+      } else if (resumeOnReturn) {
+        resumeOnReturn = false;
+        audio.play().catch(() => {});
+      }
+    };
+    const handlePageHide = () => audio.pause();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", handlePageHide);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", handlePageHide);
+      audio.pause();
+    };
+  }, []);
 
   const goToDashboard = () => navigate("/dashboard");
 
@@ -207,12 +287,36 @@ export default function OpeningScene() {
     if (isLastBeat) {
       goToDashboard();
     } else {
-      setBeatIndex((i) => i + 1);
+      const next = beatIndex + 1;
+      setBeatIndex(next);
+      // Started here, inside the tap, rather than in an effect once the
+      // new beat renders - see playVoice.
+      playVoice(next);
+    }
+  };
+
+  // Once autoplay has been refused, a tap anywhere on the scene starts
+  // the line. Buttons are left to their own handlers: Susunod already
+  // starts the NEXT line, and restarting this one first would talk over it.
+  const handleSceneClick = (e) => {
+    if (voiceState === "blocked" && !e.target.closest("button")) {
+      playVoice(beatIndex);
     }
   };
 
   return (
-    <div className="opening-scene">
+    <div className="opening-scene" onClick={handleSceneClick}>
+      {/* One element for every line, so a single tap-to-unlock on iOS
+          covers the whole scene. A pause after a refusal must not clear
+          "blocked", or the prompt to tap would disappear. */}
+      <audio
+        ref={voiceRef}
+        preload="auto"
+        onPlaying={() => setVoiceState("playing")}
+        onPause={() => setVoiceState((s) => (s === "blocked" ? s : "idle"))}
+        onEnded={() => setVoiceState("idle")}
+      />
+
       <button className="opening-skip-btn" onClick={goToDashboard}>
         Laktawan {"\u23ED\uFE0F"}
       </button>
@@ -247,6 +351,19 @@ export default function OpeningScene() {
       </div>
 
       <div className="opening-dialogue">
+        {/* Replays this beat's narration. First in the box so it can float
+            into the top-right corner with the text wrapping around it. */}
+        <button
+          type="button"
+          className={`opening-voice-btn${
+            voiceState === "idle" ? "" : ` opening-voice-btn--${voiceState}`
+          }`}
+          onClick={() => playVoice(beatIndex)}
+          aria-label={voiceState === "blocked" ? "Pakinggan" : "Pakinggan muli"}
+          title={voiceState === "blocked" ? "Pakinggan" : "Pakinggan muli"}
+        >
+          {"\uD83D\uDD0A"}
+        </button>
         {beat.speaker && <span className="opening-speaker">{beat.speaker}</span>}
         <p className="opening-text">{beat.text}</p>
 

@@ -1,8 +1,26 @@
 import { useEffect, useRef } from "react";
 
 const TARGET_VOLUME = 0.8;
+// Under recorded narration (the opening scene): low enough for the voices
+// to carry, loud enough that the scene doesn't drop into silence between
+// lines.
+const DUCKED_VOLUME = 0.2;
 const FADE_STEP = 0.05;
 const FADE_INTERVAL_MS = 100;
+
+// iOS Safari ignores audio.volume entirely - the hardware buttons own the
+// level, and the property always reads back 1 - so a lower level cannot
+// be set there. Pausing is the only way to keep the music off the
+// narration on those devices.
+const CAN_SET_VOLUME = (() => {
+  try {
+    const probe = document.createElement("audio");
+    probe.volume = 0.5;
+    return probe.volume !== 1;
+  } catch {
+    return false;
+  }
+})();
 
 /**
  * Background music player with crossfading between tracks.
@@ -18,14 +36,24 @@ const FADE_INTERVAL_MS = 100;
  *   pagehide         → the iOS-reliable version of unload; mobile Safari
  *                      often does NOT fire "beforeunload"/"unload"
  *   freeze           → Chrome discarding a backgrounded tab
+ *
+ * `ducked` lowers the music under voice-over (see App.jsx), gliding
+ * rather than jumping - or pauses it where the volume can't be set.
  */
-export default function MusicPlayer({ src }) {
+export default function MusicPlayer({ src, ducked = false }) {
   const audioRef = useRef(null);
   const fadeTimerRef = useRef(null);
   // Whether music *should* be playing — so returning to the tab doesn't
   // resume audio that was paused because the user backgrounded the app
   // mid-fade, and so background-pause survives a crossfade.
   const shouldPlayRef = useRef(true);
+  // The level fades head for. A ref, not a constant, so a fade already in
+  // flight lands on the ducked level when ducking starts partway through.
+  const targetVolumeRef = useRef(ducked ? DUCKED_VOLUME : TARGET_VOLUME);
+  // True while ducking has had to fall back to pausing (no volume control).
+  // Every path that starts playback checks it, so returning to the tab or
+  // tapping the page can't bring the music back over the narration.
+  const silencedRef = useRef(ducked && !CAN_SET_VOLUME);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -39,6 +67,7 @@ export default function MusicPlayer({ src }) {
     };
 
     const safePlay = () => {
+      if (silencedRef.current) return;
       const attempt = audio.play();
       if (attempt && typeof attempt.catch === "function") {
         attempt.catch(() => {
@@ -56,10 +85,13 @@ export default function MusicPlayer({ src }) {
           clearFade();
           return;
         }
-        if (vol < TARGET_VOLUME) {
+        // Read every tick: ducking may have changed the target mid-fade.
+        const target = targetVolumeRef.current;
+        if (vol + FADE_STEP < target) {
           vol += FADE_STEP;
-          audio.volume = Math.min(vol, TARGET_VOLUME);
+          audio.volume = vol;
         } else {
+          audio.volume = target;
           clearFade();
         }
       }, FADE_INTERVAL_MS);
@@ -77,7 +109,7 @@ export default function MusicPlayer({ src }) {
           audio.pause();
           audio.src = src;
           audio.load();
-          if (shouldPlayRef.current && !document.hidden) {
+          if (shouldPlayRef.current && !document.hidden && !silencedRef.current) {
             const attempt = audio.play();
             if (attempt && typeof attempt.then === "function") {
               attempt.then(fadeIn).catch((err) => {
@@ -117,7 +149,7 @@ export default function MusicPlayer({ src }) {
 
     // --- Start or crossfade ---
     if (!audio.src || audio.src.endsWith(src)) {
-      audio.volume = TARGET_VOLUME;
+      audio.volume = targetVolumeRef.current;
       if (!document.hidden) safePlay();
     } else {
       fadeOutAndSwap();
@@ -135,6 +167,47 @@ export default function MusicPlayer({ src }) {
       document.removeEventListener("touchstart", handleFirstInteraction);
     };
   }, [src]);
+
+  // --- Ducking under voice-over ---
+  // Declared after the effect above so that, when a route change swaps the
+  // track AND the duck together, the crossfade has already started by the
+  // time this runs.
+  useEffect(() => {
+    const audio = audioRef.current;
+    targetVolumeRef.current = ducked ? DUCKED_VOLUME : TARGET_VOLUME;
+    if (!audio) return;
+
+    if (!CAN_SET_VOLUME) {
+      silencedRef.current = ducked;
+      if (ducked) {
+        audio.pause();
+      } else if (!fadeTimerRef.current && shouldPlayRef.current && !document.hidden) {
+        // Resume - unless a crossfade is under way, which starts the
+        // next track itself when it finishes.
+        audio.play().catch(() => {});
+      }
+      return;
+    }
+
+    // A crossfade in flight reads targetVolumeRef on every tick, so it
+    // already lands on the new level. Cutting it short here would also
+    // cancel the track swap it ends with.
+    if (fadeTimerRef.current) return;
+
+    const glide = setInterval(() => {
+      const target = targetVolumeRef.current;
+      const diff = target - audio.volume;
+      if (Math.abs(diff) <= FADE_STEP) {
+        audio.volume = target;
+        clearInterval(glide);
+        if (fadeTimerRef.current === glide) fadeTimerRef.current = null;
+      } else {
+        audio.volume = Math.min(1, Math.max(0, audio.volume + Math.sign(diff) * FADE_STEP));
+      }
+    }, FADE_INTERVAL_MS);
+    // Shares the fade slot, so a track change clears it like any fade.
+    fadeTimerRef.current = glide;
+  }, [ducked]);
 
   return <audio ref={audioRef} src={src} loop hidden preload="auto" />;
 }

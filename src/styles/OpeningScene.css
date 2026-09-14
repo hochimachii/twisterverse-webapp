@@ -291,6 +291,8 @@
 }
 
 .opening-controls {
+  /* Always below the floated speaker button, however short the line. */
+  clear: both;
   margin-top: 16px;
   display: flex;
   align-items: center;
@@ -334,6 +336,54 @@
 .opening-next-btn:active {
   transform: translateY(3px);
   box-shadow: 0 2px 0 var(--verse-teal-dark), 0 4px 8px rgba(31, 92, 77, 0.3);
+}
+
+/* Replays the current beat's narration. 44px: a comfortable tap target.
+   Floated into the dialogue box's top-right corner so the text wraps
+   around it. It first sat in the controls row beside Susunod, but on a
+   phone the last beat's "Simulan ang Pakikipagsapalaran!" could not fit
+   next to it and broke onto two lines. */
+.opening-voice-btn {
+  float: right;
+  margin: -4px -6px 8px 12px;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+  background: rgba(255, 250, 240, 0.12);
+  color: #fff;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.08s ease;
+}
+
+.opening-voice-btn:hover { background: rgba(255, 250, 240, 0.22); }
+.opening-voice-btn:active { transform: translateY(2px); }
+
+/* A soft ring while a line plays, so it's clear where the voice is from. */
+.opening-voice-btn--playing {
+  animation: openingVoicePulse 1.6s ease-out infinite;
+}
+
+/* The browser refused to start the audio until something is tapped:
+   fill the button and pulse faster to invite that tap. */
+.opening-voice-btn--blocked {
+  background: rgba(244, 196, 48, 0.35);
+  animation: openingVoicePulse 0.9s ease-out infinite;
+}
+
+@keyframes openingVoicePulse {
+  0% { box-shadow: 0 0 0 0 rgba(244, 196, 48, 0.6); }
+  100% { box-shadow: 0 0 0 10px rgba(244, 196, 48, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .opening-voice-btn--playing,
+  .opening-voice-btn--blocked { animation: none; }
 }
 
 @container app (max-width: 480px) {
