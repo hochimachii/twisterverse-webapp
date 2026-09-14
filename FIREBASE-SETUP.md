@@ -204,19 +204,58 @@ Auth is unaffected: the app uses email/password, and Firebase's authorized-
 domains list only gates OAuth and email-link sign-in, neither of which this
 app uses.
 
-## Cloud Storage is not set up, deliberately
+## Recitation audio: Firebase Storage
 
-`firebase.json` has no `storage` block. The project has no Storage bucket and no
-default resource location, so deploying storage rules would fail — and the app
-doesn't need it, because recitation audio goes to Cloudinary
-(`src/services/audioStorage.js`).
+Audio moved off Cloudinary on 2026-09-14. Cloudinary URLs are public and
+unauthenticated - anyone holding a link could play a child's recording forever -
+and uploads used an unsigned preset visible in the JS bundle. Firebase Storage
+had only been avoided because it needs Blaze.
 
-`storage.rules` stays in the repo, unused and ready. To adopt Firebase Storage
-later: create the bucket in the console, then add back:
+Files live at `attempts/{studentUid}/w{world}_l{level}_{timestamp}.{ext}`, and
+the attempt document stores that **path**, never a URL. This is the point of the
+whole migration: `getDownloadURL()` returns a tokenised link that works for
+anyone who has it, which is exactly the Cloudinary weakness. So the dashboard
+fetches bytes through the SDK with the teacher's own credentials, and
+`storage.rules` actually decides who may listen.
 
-```json
-"storage": { "rules": "storage.rules" },
+Verified against the live bucket with throwaway accounts:
+
+| request | result |
+| --- | --- |
+| student uploads to own folder | 200 |
+| student uploads to another student's folder | 403 |
+| owner reads own recording | 200 |
+| teacher reads a student's recording | 200 |
+| another student reads it | 403 |
+| anonymous reads it | 403 |
+
+### Required IAM grant - do not skip this if the project is ever rebuilt
+
+`storage.rules` identifies teachers with `firestore.exists(...)`. **Cross-service
+rules only work if the Cloud Storage service agent can read Firestore.** Without
+that grant the lookup cannot evaluate, and every teacher is silently denied - no
+error, recordings just never load in the dashboard.
+
+Cloud console > IAM & Admin > Grant access:
+
 ```
+service-970295167833@gcp-sa-firebasestorage.iam.gserviceaccount.com
+```
+
+Role: **Cloud Datastore Viewer**. The agent may only appear with "Include
+Google-provided role grants" ticked. The number in the address is the project
+number; a rebuilt project has a different one.
+
+Before this grant the teacher row above returned 403 while the other five
+passed, which is what made it identifiable.
+
+### Older recordings
+
+Attempts written before the migration keep their Cloudinary `audioUrl`, and
+always will: `attempts` is append-only by `firestore.rules`, so those fields can
+never be rewritten. `AttemptAudio` in the Teacher Dashboard plays whichever field
+is present. The CSV export lists `audioUrl` or `audioPath` in its Audio column -
+old rows are clickable links, new rows are paths to play back in the dashboard.
 
 ---
 
