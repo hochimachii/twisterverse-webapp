@@ -32,40 +32,19 @@ function AppRoutes() {
     musicSrc = "/music/ending.mp3";
   }
 
-  // The teacher flow is the one part of the app meant for a wide screen:
-  // a filterable student table with CSV export. Everything else is drawn
-  // for a 9:16 phone, so it gets framed to that shape on desktop rather
-  // than letting the artwork re-crop itself. See AppFrame.css.
+  // Every student screen sits inside .app-frame, the query container the
+  // page stylesheets size themselves against - removing the wrapper would
+  // silently switch off all of their responsive rules. Screens used to be
+  // squeezed into a phone-shaped column on desktop; each now lays itself
+  // out per platform instead (split layouts for the art scenes). The
+  // teacher flow is built for a wide screen and doesn't use it. See
+  // AppFrame.css.
   const isTeacherView = location.pathname.startsWith("/teacher");
-
-  // Art-led scenes stay phone-framed on wide screens: every background is
-  // portrait 9:16, and a landscape viewport crops 61-68% of it. Each one
-  // leaves this list when it gets a split layout of its own (the activity
-  // has - see TwisterActivity.css); until then the frame is what keeps
-  // the art intact. Card screens are mostly UI over decorative scenery,
-  // so they go full width and lay themselves out per platform.
-  //
-  // Every student route still sits inside .app-frame, because the page
-  // stylesheets use CONTAINER queries against it - removing the wrapper
-  // would silently switch off all of their responsive rules.
-  const FRAMED_ROUTES = ["/", "/login", "/intro", "/ending"];
-  const isFramed = !isTeacherView && FRAMED_ROUTES.includes(location.pathname);
 
   return (
     <>
       <MusicPlayer src={musicSrc} />
-      {isFramed && (
-        // A real element rather than a body background: each page sets
-        // its own body background, and those rules land later in the
-        // cascade, so styling body here would be overridden depending on
-        // which page happens to be mounted.
-        <div className="app-frame__backdrop" aria-hidden="true" />
-      )}
-      <div
-        className={
-          isTeacherView ? undefined : `app-frame${isFramed ? " app-frame--framed" : ""}`
-        }
-      >
+      <div className={isTeacherView ? undefined : "app-frame"}>
       <Routes>
         {/* Entry route */}
         <Route path="/" element={<LoginPage />} />

@@ -340,3 +340,71 @@
   .opening-dialogue { padding: 16px 18px 18px; }
   .opening-text { font-size: 0.98rem; }
 }
+
+/* ---------- Split layout: landscape screens wider than a phone ----------
+   The library backdrop is drawn in a 9:16 viewBox, so on a landscape
+   screen the stage becomes a portrait card - the SVG fits it exactly
+   instead of slicing - and the story text moves into the panel beside
+   it. Everything inside the stage is already sized against the stage
+   (the reading nook, desk and book are percentages of it), so only the
+   two vw-based widths need re-pointing. Phones and portrait tablets keep
+   the stacked scene above. Same breakpoint as the other art scenes. */
+@media (orientation: landscape) {
+  @container app (min-width: 641px) {
+    .opening-scene {
+      --split-pad: clamp(16px, 4vh, 40px);
+      --art-h: calc(100vh - 2 * var(--split-pad));
+      display: grid;
+      grid-template-columns: auto minmax(0, 640px);
+      column-gap: clamp(24px, 3.5vw, 56px);
+      justify-content: center;
+      align-content: center;
+      align-items: center;
+      padding: var(--split-pad);
+      /* No artwork to blur here - the library is SVG - so the surround is
+         lamplight on dark wood, taken from the scene's own palette. */
+      background: radial-gradient(90% 80% at 35% 45%, #4a3324 0%, #2a1d14 55%, #140d08 100%);
+    }
+
+    .opening-stage {
+      flex: none;
+      height: var(--art-h);
+      aspect-ratio: 9 / 16;
+      max-width: 44vw;
+      min-height: 0;
+      border: 3px solid var(--gold);
+      border-radius: 26px;
+      box-shadow: 0 26px 60px rgba(0, 0, 0, 0.55);
+    }
+
+    /* 50vw and 56vw are 320px and 210px on any laptop - wider than the
+       whole card on a landscape phone. Size them to the card instead. */
+    .opening-twisty { width: min(320px, 56%); }
+    .opening-map { width: min(210px, 56%); }
+
+    .opening-dialogue {
+      margin: 0;
+      max-width: none;
+      padding: 28px 32px 30px;
+      border-radius: 26px;
+    }
+
+    .opening-speaker {
+      font-size: 0.82rem;
+      padding: 5px 14px;
+      margin-bottom: 14px;
+    }
+
+    /* Scales with screen height, like the card beside it. */
+    .opening-text {
+      font-size: clamp(1.05rem, 2.9vh, 1.6rem);
+      line-height: 1.55;
+    }
+
+    .opening-controls { margin-top: 22px; }
+    .opening-next-btn {
+      padding: 13px 26px;
+      font-size: 1rem;
+    }
+  }
+}

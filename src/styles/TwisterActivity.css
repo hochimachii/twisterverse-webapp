@@ -597,7 +597,7 @@
   color: #ffb3a7;
 }
 
-/* ---------- Split layout: landscape screens, 760px and wider ----------
+/* ---------- Split layout: landscape screens wider than a phone ----------
    Every world background is portrait 9:16. Full-bleed on a landscape
    screen, cover crops most of it away; the previous answer was a
    phone-shaped frame with dark bars filling the rest of the screen.
@@ -606,11 +606,14 @@
    guide or Twisty standing in it - and the dialogue gets the room beside
    it, with the twister set large enough to read aloud from a desk.
 
-   Phones and portrait tablets never match (orientation), and neither
-   does anything under 760px, where a side panel would be too cramped to
-   read. Those keep the stacked scene above. */
+   Phones and portrait tablets never match (orientation); they keep the
+   stacked scene above. 641px is where the dialogue box above stops being
+   a full-width dock and becomes a bordered card, so those rules always
+   hold inside the split (the tier colours rely on that border). Same
+   breakpoint as the other art scenes - it also takes in small landscape
+   phones like a 667px iPhone SE. */
 @media (orientation: landscape) {
-  @container app (min-width: 760px) {
+  @container app (min-width: 641px) {
     .activity-scene {
       --split-pad: clamp(16px, 4vh, 40px);
       --art-h: calc(100vh - 2 * var(--split-pad));
