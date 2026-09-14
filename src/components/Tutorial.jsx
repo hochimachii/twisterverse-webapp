@@ -30,17 +30,19 @@ export function markTutorialSeen(username) {
 }
 
 const STEPS = [
+  // Listen first, then repeat: each level plays a recorded reading of the
+  // twister, and the recite button stays locked until it has finished.
   {
     icon: "\uD83D\uDC42",
     title: "Makinig muna",
     body:
-      "Babasahin ng kaibigan mo sa mundong ito ang hamon sa pagbigkas. Basahin at intindihin muna ito bago magsimula."
+      "Bago magsalita, pakinggan muna ang boses na bumibigkas sa hamon. Tutukan kung paano binibigkas ang bawat salita. Pindutin ang \u201CPakinggan Muli\u201D kung nais mong marinig itong muli."
   },
   {
     icon: "\uD83C\uDF99\uFE0F",
-    title: "Pindutin ang mikropono",
+    title: "Ulitin ang iyong narinig",
     body:
-      "Pindutin ang \u201CSimulan ang Pagbigkas\u201D kapag handa ka na. Papayagan mo muna ang mic sa browser mo \u2014 isang beses lang ito."
+      "Kapag natapos ang boses, pindutin ang \u201CSimulan ang Pagbigkas\u201D at bigkasin ang hamon tulad ng iyong narinig. Papayagan mo muna ang mic sa browser mo \u2014 isang beses lang ito."
   },
   {
     icon: "\u23F1\uFE0F",

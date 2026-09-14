@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
 import { getWorld, WORLDS } from "../data/worlds";
+import { twisterVoice } from "../data/twisterVoices";
 import { useAuth } from "../context/AuthContext";
 import { markLevelComplete, loadWorldProgress } from "../services/progressService";
 import { logAttempt } from "../services/attemptsService";
@@ -41,6 +42,8 @@ export default function TwisterActivity() {
 
   const worldData = getWorld(world);
   const currentTwister = worldData?.twisters[level - 1];
+  // The level's recorded model reading, or null where none exists yet.
+  const voiceSrc = twisterVoice(world, level);
 
   // Platforms where the browser's Web Speech API is unavailable
   // (iOS/Safari, Messenger/Facebook in-app browsers) record audio and
@@ -92,6 +95,17 @@ export default function TwisterActivity() {
   const [lastScore, setLastScore] = useState(null);
   const [attempts, setAttempts] = useState(0);
   const [showTutorial, setShowTutorial] = useState(false);
+  // Listen first: the reading plays before the student may recite.
+  // "playing" | "idle" | "blocked" - blocked means the browser refused to
+  // start audio until something on the page is tapped.
+  const [voiceState, setVoiceState] = useState("idle");
+  // Reciting unlocks once the reading has been heard to the end - or
+  // straight away on a level that has no recording yet.
+  const [heardVoice, setHeardVoice] = useState(!voiceSrc);
+  const voiceRef = useRef(null);
+  // The reading that last auto-played, so re-renders and auth settling
+  // never restart it mid-sentence.
+  const autoPlayedForRef = useRef(null);
 
   const awaitingResultRef = useRef(false);
   const attemptActiveRef = useRef(false);
@@ -147,10 +161,85 @@ export default function TwisterActivity() {
     finalTranscriptRef.current = finalTranscript || "";
   }, [finalTranscript]);
 
-  // First-time walkthrough
+  // First-time walkthrough. Decided once auth has settled: before that
+  // the username may not be known yet, and the check would fall back to
+  // "guest" and show the walkthrough to a student who has already seen it.
   useEffect(() => {
-    if (!hasSeenTutorial(username)) setShowTutorial(true);
-  }, [username]);
+    if (authLoading) return;
+    setShowTutorial(!hasSeenTutorial(username));
+  }, [username, authLoading]);
+
+  /** Plays this level's reading from the start. Called straight from tap
+   *  handlers wherever it can be: iOS Safari only lets audio start inside
+   *  a user gesture. */
+  const playVoice = useCallback(() => {
+    const audio = voiceRef.current;
+    if (!audio || !voiceSrc) return;
+    audio.pause();
+    if (audio.getAttribute("src") !== voiceSrc) {
+      audio.src = voiceSrc;
+    } else {
+      audio.currentTime = 0;
+    }
+    const attempt = audio.play();
+    if (attempt && typeof attempt.catch === "function") {
+      attempt.catch((err) => {
+        // AbortError only means a newer play() replaced this one.
+        if (err && err.name === "NotAllowedError") setVoiceState("blocked");
+      });
+    }
+  }, [voiceSrc]);
+
+  // New level, new lock. Moving to the next level re-renders rather than
+  // remounts, so this is what re-arms listen-first for it.
+  useEffect(() => {
+    setHeardVoice(!voiceSrc);
+    setVoiceState("idle");
+    if (voiceRef.current) voiceRef.current.pause();
+  }, [voiceSrc]);
+
+  // Each level opens with its reading - once auth has settled, and not
+  // while the first-visit walkthrough is up: talking over it would bury
+  // both, so closing the walkthrough starts it instead (see <Tutorial>).
+  // hasSeenTutorial is checked directly as well as showTutorial, because
+  // on the very first render the walkthrough's state hasn't been set yet.
+  useEffect(() => {
+    if (!voiceSrc || authLoading || showTutorial) return;
+    if (!hasSeenTutorial(username)) return;
+    if (autoPlayedForRef.current === voiceSrc) return;
+    autoPlayedForRef.current = voiceSrc;
+    playVoice();
+  }, [voiceSrc, authLoading, showTutorial, username, playVoice]);
+
+  // Mobile browsers keep audio playing in a backgrounded tab; the reading
+  // pauses with the student and resumes when they return. Leaving the
+  // activity stops it.
+  useEffect(() => {
+    const audio = voiceRef.current;
+    if (!audio) return undefined;
+    let resumeOnReturn = false;
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        resumeOnReturn = !audio.paused && !audio.ended;
+        audio.pause();
+      } else if (resumeOnReturn) {
+        resumeOnReturn = false;
+        audio.play().catch(() => {});
+      }
+    };
+    const handlePageHide = () => audio.pause();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", handlePageHide);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", handlePageHide);
+      audio.pause();
+      // Stopped, so it may auto-play again if this mounts again - which
+      // React's StrictMode does on purpose in development, and which left
+      // the reading silent while the ref still said it had played.
+      autoPlayedForRef.current = null;
+    };
+  }, []);
 
   /** Hard-releases the microphone: stops any live recorder, drops the
    *  stream, and aborts recognition. Safe to call when nothing is running.
@@ -476,6 +565,10 @@ export default function TwisterActivity() {
   // ---------- Start / stop ----------
 
   const handleStart = async () => {
+    // Never record over the reading: the microphone would hear it, and a
+    // clean model voice is exactly what the recognizer would grade as a
+    // perfect recitation.
+    if (voiceRef.current) voiceRef.current.pause();
     setFeedback("");
     setFeedbackTier("");
     setShowValidation(false);
@@ -666,6 +759,25 @@ export default function TwisterActivity() {
 
   return (
     <div className="activity-scene" style={{ backgroundImage: `url(${worldData.cover})` }}>
+      {/* The level's recorded reading. One element for the whole activity,
+          so a single tap-to-unlock on iOS covers every level after it. A
+          file that fails to load unlocks reciting rather than trapping the
+          student behind a reading that will never finish. */}
+      <audio
+        ref={voiceRef}
+        preload="auto"
+        onPlaying={() => setVoiceState("playing")}
+        onPause={() => setVoiceState((s) => (s === "blocked" ? s : "idle"))}
+        onEnded={() => {
+          setVoiceState("idle");
+          setHeardVoice(true);
+        }}
+        onError={() => {
+          setVoiceState("idle");
+          setHeardVoice(true);
+        }}
+      />
+
       {/* The art panel. On phones it generates no box at all (display:
           contents), so the scene lays out exactly as it always has; on
           landscape screens it becomes the portrait art card of the split
@@ -731,11 +843,29 @@ export default function TwisterActivity() {
                 {"\u23F3"} Sinusuri ang pagbigkas mo{"\u2026"}
               </p>
             ) : (
+              <>
               <div className="dialogue-controls">
                 {!isActive ? (
-                  <button className="mic-btn" onClick={handleStart}>
-                    {"\uD83C\uDF99\uFE0F"} Simulan ang Pagbigkas
-                  </button>
+                  <>
+                    {voiceSrc && (
+                      <button
+                        className={`listen-btn${voiceState === "blocked" ? " listen-btn--blocked" : ""}`}
+                        onClick={playVoice}
+                        disabled={voiceState === "playing"}
+                      >
+                        {"\uD83D\uDD0A"}{" "}
+                        {voiceState === "playing"
+                          ? "Nakikinig\u2026"
+                          : heardVoice
+                          ? "Pakinggan Muli"
+                          : "Pakinggan"}
+                      </button>
+                    )}
+                    {/* Locked until the reading has played through once. */}
+                    <button className="mic-btn" onClick={handleStart} disabled={!heardVoice}>
+                      {"\uD83C\uDF99\uFE0F"} Simulan ang Pagbigkas
+                    </button>
+                  </>
                 ) : (
                   <>
                     <button className="mic-btn mic-btn--stop" onClick={handleStop}>
@@ -751,6 +881,14 @@ export default function TwisterActivity() {
                   </>
                 )}
               </div>
+              {!isActive && !heardVoice && (
+                <p className="listen-hint">
+                  {voiceState === "blocked"
+                    ? "Pindutin ang \u201CPakinggan\u201D para marinig ang hamon."
+                    : "Pakinggan muna ang hamon bago bigkasin."}
+                </p>
+              )}
+              </>
             )}
           </>
         ) : (
@@ -792,9 +930,22 @@ export default function TwisterActivity() {
                   </button>
                 </>
               ) : (
-                <button className="retry-btn" onClick={handleStart}>
-                  {"\uD83D\uDD04"} {feedbackTier === "close" ? "Subukan Ulit" : "Ulitin ang Pagbigkas"}
-                </button>
+                <>
+                  {/* Hear it again before another try. */}
+                  {voiceSrc && (
+                    <button
+                      className="listen-btn"
+                      onClick={playVoice}
+                      disabled={voiceState === "playing"}
+                    >
+                      {"\uD83D\uDD0A"}{" "}
+                      {voiceState === "playing" ? "Nakikinig\u2026" : "Pakinggan Muli"}
+                    </button>
+                  )}
+                  <button className="retry-btn" onClick={handleStart}>
+                    {"\uD83D\uDD04"} {feedbackTier === "close" ? "Subukan Ulit" : "Ulitin ang Pagbigkas"}
+                  </button>
+                </>
               )}
             </div>
           </>
@@ -828,6 +979,12 @@ export default function TwisterActivity() {
           onFinish={() => {
             markTutorialSeen(username);
             setShowTutorial(false);
+            // The walkthrough held the reading back; start it now, inside
+            // this tap, where iOS allows it.
+            if (voiceSrc && autoPlayedForRef.current !== voiceSrc) {
+              autoPlayedForRef.current = voiceSrc;
+              playVoice();
+            }
           }}
         />
       )}

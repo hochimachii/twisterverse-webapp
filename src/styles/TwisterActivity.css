@@ -374,6 +374,39 @@
   box-shadow: 0 1px 0 #7a2013, 0 2px 6px rgba(181, 48, 31, 0.25);
 }
 
+/* Plays the level's recorded reading. Cream and gold, so "listen" reads as
+   a different kind of action from the green "recite" button beside it. */
+.dialogue-controls button.listen-btn {
+  background: linear-gradient(180deg, #fff6dc 0%, var(--gold) 100%);
+  color: var(--ink);
+  box-shadow: 0 4px 0 var(--gold-dark), 0 6px 10px rgba(201, 143, 16, 0.3);
+}
+.dialogue-controls button.listen-btn:active {
+  box-shadow: 0 1px 0 var(--gold-dark), 0 2px 6px rgba(201, 143, 16, 0.25);
+}
+
+/* The browser refused to start the reading until something is tapped:
+   pulse to draw that tap. */
+.dialogue-controls button.listen-btn--blocked {
+  animation: listenPulse 0.9s ease-out infinite;
+}
+
+@keyframes listenPulse {
+  0% { box-shadow: 0 4px 0 var(--gold-dark), 0 0 0 0 rgba(244, 196, 48, 0.7); }
+  100% { box-shadow: 0 4px 0 var(--gold-dark), 0 0 0 12px rgba(244, 196, 48, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialogue-controls button.listen-btn--blocked { animation: none; }
+}
+
+/* Why the recite button is still locked. */
+.listen-hint {
+  margin: 10px 0 0;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
 /* ---------- Empty state (missing twister data) ---------- */
 .activity-empty {
   align-self: center;

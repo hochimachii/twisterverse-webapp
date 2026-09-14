@@ -32,9 +32,12 @@ function AppRoutes() {
     musicSrc = "/music/ending.mp3";
   }
 
-  // The opening scene is narrated (recorded voice per beat), so the music
-  // drops underneath it and comes back up on the way to the dashboard.
-  const musicDucked = location.pathname === "/intro";
+  // Music drops under recorded voices: the opening scene's narration, and
+  // the activity, where each twister's reading plays before the student
+  // recites. In the activity it also keeps the music out of the
+  // microphone while they speak. It comes back up on the way out.
+  const musicDucked =
+    location.pathname === "/intro" || location.pathname === "/activity";
 
   // Every student screen sits inside .app-frame, the query container the
   // page stylesheets size themselves against - removing the wrapper would

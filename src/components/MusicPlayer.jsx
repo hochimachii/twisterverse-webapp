@@ -1,9 +1,9 @@
 import { useEffect, useRef } from "react";
 
 const TARGET_VOLUME = 0.8;
-// Under recorded narration (the opening scene): low enough for the voices
-// to carry, loud enough that the scene doesn't drop into silence between
-// lines.
+// Under recorded voices (the opening scene, the activity's readings): low
+// enough for the voices to carry, loud enough that the scene doesn't drop
+// into silence between lines.
 const DUCKED_VOLUME = 0.2;
 const FADE_STEP = 0.05;
 const FADE_INTERVAL_MS = 100;
