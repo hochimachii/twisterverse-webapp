@@ -37,7 +37,11 @@
   container-name: app;
 }
 
-/* 9/16 = 0.5625. Above that ratio the viewport is wider than the art, so
+/* Everything below applies only to .app-frame--framed - the art-led
+   scenes. Card screens carry .app-frame alone: a query container at full
+   width, laying out per platform via their own stylesheets.
+
+   9/16 = 0.5625. Above that ratio the viewport is wider than the art, so
    cover would start cropping vertically - which is exactly when the
    frame should kick in. Below it (phones, most tablets in portrait)
    nothing changes at all. */
@@ -53,7 +57,7 @@
     z-index: 0;
   }
 
-  .app-frame {
+  .app-frame--framed {
     position: fixed;
     inset: 0;
     /* Capped at 480px so the container stays inside the design's own
@@ -95,14 +99,45 @@
      before the page components, so page rules land later in the bundle
      and win at equal weight. .guide-scene also sets inset:0, which is
      left AND right, so both have to be overridden. */
-  .app-frame .guide-scene,
-  .app-frame .unlock-overlay,
-  .app-frame .tutorial-overlay,
-  .app-frame .welcome-overlay,
-  .app-frame .key-overlay {
+  .app-frame--framed .guide-scene,
+  .app-frame--framed .unlock-overlay,
+  .app-frame--framed .tutorial-overlay,
+  .app-frame--framed .welcome-overlay,
+  .app-frame--framed .key-overlay {
     left: 50%;
     right: auto;
     width: min(100vw, calc(100vh * 9 / 16), 480px);
     transform: translateX(-50%);
+  }
+
+  /* The meet-the-guide scene is art-led but opens over the STAGES page,
+     which is a full-width card screen now. Left as it was, cover would
+     crop the portrait world art down to a middle band.
+
+     Contain shows the art whole in a centred column over the frame
+     colour, which is the framed look - while the scene itself still
+     spans the viewport. That matters: squeezing the element into a
+     column instead would leave the level buttons clickable through the
+     dark sides. The other overlays are dimmed popups with a centred
+     card, and are fine at full width.
+
+     Stopgap until the art scenes get their split layouts. */
+  .app-frame:not(.app-frame--framed) .guide-scene {
+    background-color: #14100c;
+    background-size: contain;
+  }
+
+  /* Sized to the art column, not the viewport, so the card sits on the
+     artwork. The floor keeps it readable on short landscape screens,
+     where that column is only ~220px wide. */
+  .app-frame:not(.app-frame--framed) .guide-dialogue {
+    max-width: max(320px, calc(100vh * 9 / 16 - 32px));
+  }
+
+  /* Its -4% margin resolves against the scene's WIDTH: 19px in the 480px
+     frame, but 58px across a 1440px screen, burying the guide's feet
+     behind the dialogue. Same overlap as before, against the art column. */
+  .app-frame:not(.app-frame--framed) .guide-scene__standee:not(.guide-scene__standee--pending) {
+    margin-bottom: calc(100vh * 9 / 16 * -0.04);
   }
 }

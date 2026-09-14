@@ -502,3 +502,79 @@
   .guide-dialogue { padding: 16px 18px 18px; }
   .guide-dialogue__line { font-size: 0.95rem; }
 }
+
+/* ---------- Adaptive layout ----------
+   phone (<640, stacked above) / tablet (640-1023) / desktop (1024+). */
+
+@container app (min-width: 640px) and (max-width: 1023px) {
+  .stage-wrapper { max-width: 880px; }
+  .level-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+
+  /* Measured on an 820x1180 portrait tablet: at full card width the
+     portrait map grew to 1014px - nearly the whole screen - putting every
+     level below the fold. Same fix as desktop, for the vertical case. */
+  .twisterverse-map {
+    display: flex;
+    justify-content: center;
+  }
+  .twisterverse-map__svg {
+    width: auto;
+    max-width: 100%;
+    max-height: 55vh;
+  }
+}
+
+/* Desktop: map and levels side by side. Stacked, a wide screen showed the
+   map and then made the student scroll past it to reach any level - the
+   exact thing a landscape screen has room to avoid. */
+@container app (min-width: 1024px) {
+  .stage-wrapper {
+    max-width: 1200px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    grid-template-areas:
+      "title title"
+      "map   heading"
+      "map   levels"
+      "map   back";
+    /* The last row soaks up the map's remaining height, so the back button
+       sits directly under the levels instead of floating mid-column. */
+    grid-template-rows: auto auto auto 1fr;
+    column-gap: 32px;
+    align-items: start;
+  }
+
+  .stage-wrapper > h1 { grid-area: title; }
+
+  /* The map is portrait-shaped, so at the width of this column it grew to
+     ~800px - taller than a 900px laptop screen - cutting Mundo 1 off the
+     bottom and making the page scroll just to reach it. Capping the
+     height to the viewport lets the SVG scale down to fit, keeping all
+     four worlds on screen beside the levels. */
+  .twisterverse-map {
+    grid-area: map;
+    margin-bottom: 0;
+    display: flex;
+    justify-content: center;
+  }
+  .twisterverse-map__svg {
+    width: auto;
+    max-width: 100%;
+    max-height: calc(100vh - 210px);
+  }
+  .stage-wrapper > h2 { grid-area: heading; margin-top: 4px; }
+
+  /* Unplaced, this auto-flowed into a fresh row BELOW the 720px map and
+     pushed the page past the bottom of the screen. */
+  .stage-wrapper > .back-btn {
+    grid-area: back;
+    justify-self: start;
+    margin-top: 18px;
+  }
+
+  .level-grid {
+    grid-area: levels;
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    align-content: start;
+  }
+}

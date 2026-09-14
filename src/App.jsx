@@ -38,17 +38,33 @@ function AppRoutes() {
   // than letting the artwork re-crop itself. See AppFrame.css.
   const isTeacherView = location.pathname.startsWith("/teacher");
 
+  // Art-led scenes stay phone-framed on wide screens: every background is
+  // portrait 9:16, and a landscape viewport crops 61-68% of it. They get
+  // split layouts next; until then the frame is what keeps them intact.
+  // Card screens are mostly UI over decorative scenery, so they go full
+  // width and lay themselves out per platform.
+  //
+  // Every student route still sits inside .app-frame, because the page
+  // stylesheets use CONTAINER queries against it - removing the wrapper
+  // would silently switch off all of their responsive rules.
+  const FRAMED_ROUTES = ["/", "/login", "/intro", "/activity", "/ending"];
+  const isFramed = !isTeacherView && FRAMED_ROUTES.includes(location.pathname);
+
   return (
     <>
       <MusicPlayer src={musicSrc} />
-      {!isTeacherView && (
+      {isFramed && (
         // A real element rather than a body background: each page sets
         // its own body background, and those rules land later in the
         // cascade, so styling body here would be overridden depending on
         // which page happens to be mounted.
         <div className="app-frame__backdrop" aria-hidden="true" />
       )}
-      <div className={isTeacherView ? undefined : "app-frame"}>
+      <div
+        className={
+          isTeacherView ? undefined : `app-frame${isFramed ? " app-frame--framed" : ""}`
+        }
+      >
       <Routes>
         {/* Entry route */}
         <Route path="/" element={<LoginPage />} />

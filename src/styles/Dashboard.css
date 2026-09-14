@@ -329,3 +329,50 @@
     max-width: 100%;
   }
 }
+
+/* ---------- Adaptive layout ----------
+   Three tiers against the app container: phone (<640, the stacked layout
+   above), tablet (640-1023) and desktop (1024+). Card screens are no
+   longer phone-framed on wide screens, so they have to use the room. */
+
+@container app (min-width: 640px) and (max-width: 1023px) {
+  .dashboard-wrapper { max-width: 780px; }
+}
+
+/* Desktop: a real two-column dashboard instead of one long phone column.
+   The profile sits beside the progress it belongs to; keys and the main
+   actions run the full width underneath. */
+@container app (min-width: 1024px) {
+  .dashboard-wrapper {
+    max-width: 1160px;
+    display: grid;
+    grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+    grid-template-areas:
+      "header  header"
+      "profile progress"
+      "profile stats"
+      "keys    keys"
+      "actions actions";
+    gap: 18px;
+  }
+
+  /* The grid gap does the spacing now; stacked-layout margins would add
+     to it and open uneven holes. */
+  .dashboard-wrapper > header,
+  .dashboard-wrapper > section { margin-bottom: 0; }
+
+  .dashboard-header { grid-area: header; }
+  .progress-card { grid-area: progress; }
+  .stats-panel { grid-area: stats; }
+  .keys-card { grid-area: keys; }
+  .main-actions { grid-area: actions; }
+
+  /* Tall enough to span two rows, so stack avatar over details rather
+     than leaving a wide, half-empty row. */
+  .profile-card {
+    grid-area: profile;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+  }
+}

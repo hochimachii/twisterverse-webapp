@@ -221,3 +221,60 @@
     font-size: 1.35rem;
   }
 }
+
+/* ---------- Adaptive layout ----------
+   phone (<640, single column above) / tablet (640-1023) / desktop (1024+). */
+
+/* A lone form card reads better centred once there is spare height.
+   Safe when the card is taller than the screen: .profile-bg only has a
+   MIN-height, so it grows instead of pushing the top out of reach. */
+@container app (min-width: 640px) {
+  .profile-bg { align-items: center; }
+}
+
+@container app (min-width: 640px) and (max-width: 1023px) {
+  .profile-wrapper { max-width: 560px; }
+}
+
+/* Desktop: the preview becomes the showpiece on the left and the whole
+   form runs down the right in its normal order.
+
+   The preview spans the seven right-hand rows (name, avatar picker, four
+   selects, button) and is shorter than them, so it centres against the
+   form without stretching any row - the fields keep even spacing. An
+   earlier version split the avatar picker and preview across rows shared
+   with the fields, which left a 137px hole in one column and a 177px one
+   in the other. */
+@container app (min-width: 1024px) {
+  .profile-wrapper { max-width: 860px; }
+
+  .profile-wrapper form {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    column-gap: 36px;
+    row-gap: 12px;
+    align-items: start;
+  }
+
+  .profile-preview {
+    grid-column: 1;
+    grid-row: 1 / span 7;
+    align-self: center;
+    justify-self: center;
+    width: 100%;
+    max-width: 280px;
+    margin-top: 0;
+    padding: 24px 18px;
+  }
+
+  .preview-avatar {
+    width: 132px;
+    height: 132px;
+  }
+
+  .profile-wrapper form > input,
+  .profile-wrapper form > select,
+  .profile-wrapper form > .avatar-selection,
+  .profile-wrapper form > .error,
+  .profile-wrapper form > button[type="submit"] { grid-column: 2; }
+}
