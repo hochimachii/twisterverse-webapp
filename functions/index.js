@@ -273,6 +273,18 @@ exports.resetStudentPassword = onCall(
     }
     const teacher = teacherSnap.data();
 
+    // A teacher document alone is no longer enough: signing up files a
+    // request, and the admin has to approve it. The Admin SDK ignores
+    // firestore.rules, so the check is repeated here. Records from before
+    // sign-ups were verified have no status and count as approved, as
+    // they do in the rules.
+    if ((teacher.status || "approved") !== "approved") {
+      throw new HttpsError(
+        "permission-denied",
+        "Hindi pa inaprubahan ang iyong account."
+      );
+    }
+
     // Refuse to touch another TEACHER's account. Without this a teacher
     // could pass a colleague's uid - or the master account's - and take
     // it over, since the checks below only ever look at student data.

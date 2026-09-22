@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAllStudents, displayName } from "../services/userService";
-import { resetStudentPassword } from "../services/teacherService";
 import { audioObjectUrl } from "../services/audioStorage";
 import { schoolName, SCHOOLS } from "../data/schools";
 import { getAllAttempts } from "../services/attemptsService";
@@ -11,8 +10,17 @@ import {
   downloadCsv,
   exportFilename
 } from "../utils/exportStudentData";
-import { getTeacherByUid } from "../services/teacherService";
+import {
+  getTeacherByUid,
+  resetStudentPassword,
+  getAllTeachers,
+  reviewTeacher,
+  teacherStatus,
+  teacherFullName,
+  TEACHER_STATUS
+} from "../services/teacherService";
 import { subscribeToAuthState, signOutUser } from "../services/authService";
+import TeacherApprovals from "../components/TeacherApprovals";
 import { WORLDS, totalLevelCount } from "../data/worlds";
 import "../styles/Dashboard.css";
 import "../styles/TeacherDashboard.css";
@@ -155,6 +163,14 @@ export default function TeacherDashboard() {
   // Password reset for the student currently open in the detail panel.
   const [resetPassword, setResetPassword] = useState("");
   const [resetState, setResetState] = useState({ busy: false, msg: "", ok: false });
+  // Master access only: which list is showing, and the teacher accounts
+  // the admin approves.
+  const [view, setView] = useState("students");
+  const [teachers, setTeachers] = useState([]);
+  const [teachersLoading, setTeachersLoading] = useState(true);
+  const [teachersError, setTeachersError] = useState("");
+  const [reviewBusy, setReviewBusy] = useState(null);
+  const [reviewError, setReviewError] = useState("");
 
   // Master access sees every school. It is a flag on the teacher
   // document, so granting it is a deliberate act rather than something
@@ -174,6 +190,14 @@ export default function TeacherDashboard() {
       if (!t) {
         // Signed in, but not a teacher account (e.g. a student session) —
         // not authorized for this screen.
+        navigate("/teacher-login");
+        return;
+      }
+      if (teacherStatus(t) !== TEACHER_STATUS.approved) {
+        // A sign-up request the admin hasn't approved, or one that was
+        // rejected or revoked. The login screen explains which; the rules
+        // would refuse the student data anyway.
+        await signOutUser();
         navigate("/teacher-login");
         return;
       }
@@ -211,6 +235,50 @@ export default function TeacherDashboard() {
       cancelled = true;
     };
   }, [authChecked]);
+
+  // The admin's list of teacher accounts. Loaded up front rather than when
+  // the tab opens, so the tab can show how many requests are waiting.
+  const loadTeachers = useCallback(async () => {
+    setTeachersLoading(true);
+    setTeachersError("");
+    try {
+      setTeachers(await getAllTeachers());
+    } catch (err) {
+      console.error(err);
+      setTeachersError("Hindi ma-load ang listahan ng mga guro.");
+    } finally {
+      setTeachersLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (authChecked && isMaster) loadTeachers();
+  }, [authChecked, isMaster, loadTeachers]);
+
+  const handleReview = async (uid, status) => {
+    setReviewBusy({ uid, status });
+    setReviewError("");
+    try {
+      await reviewTeacher(uid, status);
+      // Mirrors what was just written rather than re-reading every record.
+      setTeachers((list) =>
+        list.map((t) =>
+          t.uid === uid
+            ? { ...t, status, reviewedBy: teacher.uid, reviewedAt: new Date() }
+            : t
+        )
+      );
+    } catch (err) {
+      console.error(err);
+      setReviewError("Hindi naisagawa. Subukan ulit.");
+    } finally {
+      setReviewBusy(null);
+    }
+  };
+
+  const pendingCount = teachers.filter(
+    (t) => teacherStatus(t) === TEACHER_STATUS.pending
+  ).length;
 
   const handleSignOut = async () => {
     await signOutUser();
@@ -321,7 +389,7 @@ export default function TeacherDashboard() {
         {/* HEADER */}
         <header className="dashboard-header">
           <h1 className="dashboard-title">
-            Kumusta, {teacher?.name || "Guro"}!
+            Kumusta, {teacherFullName(teacher) || "Guro"}!
             {isMaster ? (
               <span className="teacher-school-tag teacher-school-tag--master">
                 Lahat ng Paaralan
@@ -337,7 +405,48 @@ export default function TeacherDashboard() {
           </button>
         </header>
 
-        {dataLoading ? (
+        {isMaster && (
+          <nav className="teacher-tabs" aria-label="Mga listahan">
+            <button
+              type="button"
+              className={`teacher-tabs__tab ${view === "students" ? "is-active" : ""}`}
+              aria-pressed={view === "students"}
+              onClick={() => setView("students")}
+            >
+              Mga Mag-aaral
+            </button>
+            <button
+              type="button"
+              className={`teacher-tabs__tab ${view === "teachers" ? "is-active" : ""}`}
+              aria-pressed={view === "teachers"}
+              // The badge alone is just a number to a screen reader.
+              aria-label={
+                pendingCount > 0
+                  ? `Mga Guro, ${pendingCount} naghihintay ng pag-apruba`
+                  : undefined
+              }
+              onClick={() => setView("teachers")}
+            >
+              Mga Guro
+              {pendingCount > 0 && (
+                <span className="teacher-tabs__count">{pendingCount}</span>
+              )}
+            </button>
+          </nav>
+        )}
+
+        {isMaster && view === "teachers" ? (
+          <TeacherApprovals
+            teachers={teachers}
+            currentUid={teacher.uid}
+            loading={teachersLoading}
+            error={teachersError}
+            reviewError={reviewError}
+            busy={reviewBusy}
+            onReview={handleReview}
+            onRetry={loadTeachers}
+          />
+        ) : dataLoading ? (
           <p className="loading-text">Naglo-load ng mga mag-aaral...</p>
         ) : dataError ? (
           <p className="teacher-empty">{dataError}</p>

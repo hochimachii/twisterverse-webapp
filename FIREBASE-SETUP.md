@@ -259,6 +259,75 @@ old rows are clickable links, new rows are paths to play back in the dashboard.
 
 ---
 
+## Teacher verification
+
+Added 2026-09-22 at the client's request. Signing up as a teacher no longer
+opens the dashboard: it files a **request**, and the admin approves it first.
+
+**The flow.** The sign-up form asks for first, middle (optional) and last name,
+school and section, plus the username/email and password. That creates the
+Auth account and a `teachers/{uid}` document with `status: "pending"`, then
+signs the new account straight back out. Logging in while pending shows a
+"waiting for approval" notice; a rejected or revoked account is told to contact
+the admin. The section list comes from `src/data/schools.js`, grouped by grade,
+and the grade is stored alongside it.
+
+**The admin** is any teacher whose document has `isMaster: true`. At the time of
+writing that is `jeremy@twisterverse-teacher.local`
+(`Tq6ZAyVnJUZsGtqse5J3SEYhvtE3`). Their Teacher Dashboard gains a **Mga Guro**
+tab, with a red count when requests are waiting. It has three lists:
+
+- waiting requests, oldest first (**Aprubahan** / **Tanggihan**)
+- approved teachers (**Bawiin**, which asks for confirmation first)
+- rejected or revoked teachers (**Aprubahan**)
+
+Every decision can be reversed. `isMaster` itself can only be set by hand in the
+Firebase console, since the rules refuse it from the app.
+
+**Where it is enforced.** The screens only explain the decision. What actually
+enforces it:
+
+- `firestore.rules`: `isTeacher()` now requires an approved record, so a
+  pending or rejected account reads no student data however it calls
+  Firestore. A teacher can create only their own record, only as a pending
+  request with exactly the sign-up fields, and only with a username that
+  matches the account's own login. Only the admin can update records, and only
+  `status`, `reviewedBy` (must be the admin) and `reviewedAt` (must be the
+  server time). The admin's own record and other master records can't be
+  changed.
+- `storage.rules`: recordings are readable by approved teachers only.
+- `functions/index.js`: `resetStudentPassword` refuses teachers who aren't
+  approved. The Admin SDK ignores the rules, so the check is repeated there.
+
+**Accounts from before verification** have no `status` field. They count as
+approved everywhere (rules, function and app), so nobody was locked out when
+this shipped. They show in the admin's approved list with "Account bago ang
+pag-apruba", and can be revoked like any other.
+
+**Unchanged:** a teacher still sees their whole school's students. The section
+is recorded for the admin to verify, and does not narrow the dashboard.
+
+**Deploy order.** Deploy Hosting first, then the rules, then the function:
+
+```bash
+npm run build && firebase deploy --only hosting
+```
+
+```bash
+firebase deploy --only firestore:rules,storage
+```
+
+```bash
+firebase deploy --only functions:resetStudentPassword
+```
+
+In the other order, the new rules would refuse sign-ups from the old app for as
+long as someone still has it open. That would leave an Auth account with no
+request document, and a username nobody can use. Before the rules deploy, read
+the rules section above: compare what is live first.
+
+---
+
 ## Things worth knowing
 
 **Region has to match in two places.** `REGION` in `functions/index.js` and

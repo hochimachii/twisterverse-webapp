@@ -77,3 +77,18 @@ export function sectionsFor(schoolId, grade) {
   if (!school) return [];
   return school.sections[grade] || school.sections[Number(grade)] || [];
 }
+
+/** Every section a school has, grouped by grade - for a single dropdown
+ *  where the grade is implied by the section rather than asked for. */
+export function sectionGroupsFor(schoolId) {
+  return gradesFor(schoolId).map((grade) => ({
+    grade,
+    sections: sectionsFor(schoolId, grade)
+  }));
+}
+
+/** The grade a section belongs to at a school, or "" if it has none. */
+export function gradeOfSection(schoolId, section) {
+  const group = sectionGroupsFor(schoolId).find((g) => g.sections.includes(section));
+  return group ? group.grade : "";
+}

@@ -460,3 +460,222 @@
   border: 1px solid rgba(160, 40, 30, 0.35);
   color: #8c2318;
 }
+
+/* ---------- Master access: students / teachers ---------- */
+.teacher-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.teacher-tabs__tab {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 2.5px solid var(--card-border);
+  background: var(--card-bg);
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(20, 15, 10, 0.15);
+}
+
+.teacher-tabs__tab.is-active {
+  background: linear-gradient(180deg, var(--verse-teal) 0%, var(--verse-teal-dark) 100%);
+  border-color: var(--verse-teal-dark);
+  color: #fff;
+}
+
+/* Waiting requests. Red so it's noticed from the students tab. */
+.teacher-tabs__count {
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--twister-red);
+  color: #fff;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+/* ---------- Teacher approvals ---------- */
+.teacher-approvals {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.teacher-approvals__group {
+  background: var(--card-bg);
+  backdrop-filter: blur(8px) saturate(1.1);
+  -webkit-backdrop-filter: blur(8px) saturate(1.1);
+  border: 3px solid var(--card-border);
+  border-radius: 20px;
+  padding: 14px 16px;
+}
+
+.teacher-approvals__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--verse-teal-dark);
+}
+
+.teacher-approvals__count {
+  padding: 0 8px;
+  border-radius: 999px;
+  background: rgba(79, 195, 201, 0.2);
+  font-size: 0.8rem;
+}
+
+.teacher-approvals__hint {
+  margin: 6px 0 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+.teacher-approvals__list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.teacher-approvals__group .teacher-empty {
+  padding: 10px 0 2px;
+  font-size: 0.85rem;
+}
+
+.teacher-approvals__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.teacher-approvals__review-error {
+  margin: 0;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: rgba(160, 40, 30, 0.1);
+  border: 1px solid rgba(160, 40, 30, 0.35);
+  color: #8c2318;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.teacher-request {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: rgba(255, 255, 255, 0.6);
+  border: 2px solid rgba(74, 51, 36, 0.15);
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+
+/* A waiting request is the one needing action. */
+.teacher-request--pending {
+  border-color: var(--gold);
+  background: rgba(255, 246, 214, 0.85);
+}
+
+.teacher-request__info {
+  flex: 1 1 220px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.teacher-request__name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-weight: 800;
+  font-size: 0.98rem;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.teacher-request__tag {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(79, 195, 201, 0.2);
+  color: var(--verse-teal-dark);
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.teacher-request__tag--admin {
+  background: var(--accent, #7a2013);
+  color: #fff;
+}
+
+.teacher-request__meta {
+  font-size: 0.8rem;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.teacher-request__meta--soft {
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+}
+
+.teacher-request__actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.teacher-request__btn {
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+.teacher-request__btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.teacher-request__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.teacher-request__btn--approve {
+  border: 2px solid var(--guest-green-dark);
+  background: var(--guest-green-dark);
+  color: #fff;
+}
+
+.teacher-request__btn--reject {
+  border: 2px solid rgba(160, 40, 30, 0.5);
+  background: rgba(255, 255, 255, 0.8);
+  color: #8c2318;
+}
+
+/* On phones a waiting request's two buttons share a full-width row. Only
+   those: a full-width "Bawiin" under every approved teacher would make
+   revoking the loudest thing on the list. */
+@media (max-width: 480px) {
+  .teacher-request--pending .teacher-request__actions { width: 100%; margin-left: 0; }
+  .teacher-request--pending .teacher-request__btn { flex: 1; }
+}
