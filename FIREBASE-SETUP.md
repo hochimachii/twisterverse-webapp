@@ -156,6 +156,10 @@ Compare them first: Firebase console > Firestore Database > Rules. If they
 match, deploy freely. If they don't, reconcile before deploying — a mismatch
 either locks students out or opens data up, and neither is obvious afterwards.
 
+Last compared 2026-09-22, just before the teacher-verification rules: the live
+Firestore and Storage rules were identical to this repo's, so nothing had been
+edited in the console.
+
 Nothing in this speech work requires a rules deploy. Leave it alone if in doubt.
 
 ## Hosting caching - don't remove the headers block
@@ -273,8 +277,8 @@ the admin. The section list comes from `src/data/schools.js`, grouped by grade,
 and the grade is stored alongside it.
 
 **The admin** is any teacher whose document has `isMaster: true`. At the time of
-writing that is `jeremy@twisterverse-teacher.local`
-(`Tq6ZAyVnJUZsGtqse5J3SEYhvtE3`). Their Teacher Dashboard gains a **Mga Guro**
+writing that is one account, Jeremy's real-email login (uid
+`Qd7633EpreYJAaYv9vAv1kCuk7D3`). Their Teacher Dashboard gains a **Mga Guro**
 tab, with a red count when requests are waiting. It has three lists:
 
 - waiting requests, oldest first (**Aprubahan** / **Tanggihan**)
@@ -298,6 +302,18 @@ enforces it:
 - `storage.rules`: recordings are readable by approved teachers only.
 - `functions/index.js`: `resetStudentPassword` refuses teachers who aren't
   approved. The Admin SDK ignores the rules, so the check is repeated there.
+
+These rules close a hole in the version they replaced. That version let any
+signed-in user write their own teacher record, so any teacher could give
+themselves `isMaster`, and anyone could make themselves a teacher.
+
+Tested before deploying with the Firebase Rules test API (`projects.test`,
+which evaluates a rules source against simulated requests without deploying).
+There were 68 Firestore cases: reads by every kind of account, sign-up
+requests with each field wrong, and every review path. There were 10 Storage
+cases. All passed. Run against the rules they replace, the same suites failed
+exactly the 34 + 2 security cases, which shows the tests can tell the
+difference.
 
 **Accounts from before verification** have no `status` field. They count as
 approved everywhere (rules, function and app), so nobody was locked out when
