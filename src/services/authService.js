@@ -17,6 +17,10 @@ import {
 } from "firebase/auth";
 import { auth } from "../firebase";
 
+// The invented domains usernames are mapped onto. Never emailed.
+const STUDENT_DOMAIN = "twisterverse.local";
+const TEACHER_DOMAIN = "twisterverse-teacher.local";
+
 function usernameToEmail(identifier, role) {
   const trimmed = (identifier || "").trim().toLowerCase();
 
@@ -29,8 +33,24 @@ function usernameToEmail(identifier, role) {
   // reset by their teacher instead.
   if (trimmed.includes("@")) return trimmed;
 
-  const domain = role === "teacher" ? "twisterverse-teacher.local" : "twisterverse.local";
+  const domain = role === "teacher" ? TEACHER_DOMAIN : STUDENT_DOMAIN;
   return `${trimmed}@${domain}`;
+}
+
+/** The username behind a login address - usernameToEmail in reverse. A
+ *  real email address is its own username.
+ *
+ *  Logins are lowercased, so this loses any capitals typed at sign-up.
+ *  Prefer the username stored on the student's record; this is for when
+ *  that record is missing. */
+export function usernameFromEmail(email) {
+  const address = (email || "").trim().toLowerCase();
+  const at = address.lastIndexOf("@");
+  if (at === -1) return address;
+  const domain = address.slice(at + 1);
+  return domain === STUDENT_DOMAIN || domain === TEACHER_DOMAIN
+    ? address.slice(0, at)
+    : address;
 }
 
 /** True when this identifier can receive a reset link at all. A username

@@ -11,7 +11,13 @@
 
 import { doc, getDoc, setDoc, collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
-import { signUp, signIn } from "./authService";
+import {
+  signUp,
+  signIn,
+  signOutUser,
+  getCurrentUser,
+  usernameFromEmail
+} from "./authService";
 
 /** Creates a new student account (Auth) — profile is saved separately
  *  via saveUserProfile() once ProfileSetup completes. */
@@ -20,7 +26,17 @@ export async function createUser({ username, password }) {
   // Store the username on the (still-empty) profile doc immediately, so
   // getAllStudents/search can find the account even before ProfileSetup
   // finishes.
-  await setDoc(doc(db, "users", user.uid), { username, profile: null });
+  try {
+    await setDoc(doc(db, "users", user.uid), { username, profile: null });
+  } catch (err) {
+    // Without this record the account is only half made, and its username
+    // is already taken, so signing up again would fail. Remove it so the
+    // student can simply try again. If even that fails, saveUserProfile
+    // repairs the record when they log in.
+    await user.delete().catch(() => {});
+    await signOutUser().catch(() => {});
+    throw err;
+  }
   return user;
 }
 
@@ -50,8 +66,21 @@ export async function saveUserProfile(uid, profileData) {
   }
   const ref = doc(db, "users", uid);
   const snap = await getDoc(ref);
-  const username = snap.exists() ? snap.data().username : undefined;
-  await setDoc(ref, { username, profile: profileData }, { merge: true });
+  const record = { profile: profileData };
+
+  // The username is written at sign-up, and merge leaves it in place. But
+  // an account can exist without that record - the app closed between
+  // creating the account and saving it, or the record was deleted in the
+  // console. This used to send username: undefined, which Firestore
+  // rejects outright, so every save failed and the student was stuck on
+  // Profile Setup. Recover the username from the account's own login.
+  if (!snap.exists() || !snap.data().username) {
+    const user = getCurrentUser();
+    const recovered = user && user.uid === uid ? usernameFromEmail(user.email) : "";
+    if (recovered) record.username = recovered;
+  }
+
+  await setDoc(ref, record, { merge: true });
 }
 
 export function isProfileComplete(profile) {

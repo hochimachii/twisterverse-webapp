@@ -1,7 +1,11 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
-import { subscribeToAuthState, signOutUser } from "../services/authService";
+import {
+  subscribeToAuthState,
+  signOutUser,
+  usernameFromEmail
+} from "../services/authService";
 
 const AuthContext = createContext(null);
 
@@ -19,12 +23,18 @@ export function AuthProvider({ children }) {
         setUid(firebaseUser.uid);
         try {
           const snap = await getDoc(doc(db, "users", firebaseUser.uid));
-          const uname = snap.exists() ? snap.data().username : firebaseUser.email;
+          // A record missing, or without a username, falls back to the
+          // username the login stands for. It used to fall back to the raw
+          // address, or to undefined - which Firestore refuses, so that
+          // student's attempts silently failed to log.
+          const uname =
+            (snap.exists() && snap.data().username) ||
+            usernameFromEmail(firebaseUser.email);
           setUsername(uname);
           sessionStorage.setItem("username", uname);
         } catch (err) {
           console.error("Could not load username for signed-in user:", err);
-          setUsername(firebaseUser.email);
+          setUsername(usernameFromEmail(firebaseUser.email));
         }
       } else {
         // No Firebase session - fully signed out.
