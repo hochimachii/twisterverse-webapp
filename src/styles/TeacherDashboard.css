@@ -1,0 +1,763 @@
+/* TeacherDashboard.css — reuses Dashboard.css's background/header/
+   card language (same background.PNG, same gold-bordered frosted
+   cards) and adds the filter bar, student list, and attempt-history
+   detail overlay specific to this screen.
+*/
+
+.teacher-wrapper {
+  max-width: 720px;
+}
+
+/* FILTERS + SEARCH */
+.teacher-filters {
+  background: var(--card-bg);
+  backdrop-filter: blur(8px) saturate(1.1);
+  -webkit-backdrop-filter: blur(8px) saturate(1.1);
+  border: 3px solid var(--card-border);
+  border-radius: 20px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.teacher-filters__row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.teacher-select {
+  flex: 1;
+  min-width: 130px;
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 2px solid rgba(74, 51, 36, 0.2);
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.teacher-search {
+  width: 100%;
+  padding: 11px 16px;
+  border-radius: 999px;
+  border: 2px solid rgba(74, 51, 36, 0.2);
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--ink);
+  font-size: 0.95rem;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.teacher-search:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(244, 196, 48, 0.25);
+}
+
+/* STUDENT LIST */
+.teacher-student-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.teacher-empty {
+  text-align: center;
+  color: var(--ink-soft);
+  font-weight: 600;
+  padding: 18px;
+}
+
+.teacher-student-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  background: var(--card-bg);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 2.5px solid var(--card-border);
+  border-radius: 16px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: transform 0.08s ease, box-shadow 0.15s ease;
+  box-shadow: 0 4px 10px rgba(20, 15, 10, 0.15);
+}
+
+.teacher-student-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(20, 15, 10, 0.2);
+}
+
+.teacher-student-card__avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.teacher-student-card__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.teacher-student-card__name {
+  font-weight: 800;
+  color: var(--ink);
+  font-size: 0.98rem;
+}
+
+.teacher-student-card__meta {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+
+.teacher-student-card__stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.teacher-student-card__percent {
+  font-weight: 800;
+  color: var(--verse-teal-dark);
+  font-size: 1rem;
+}
+
+.teacher-student-card__fails {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--twister-red);
+}
+
+/* STUDENT DETAIL OVERLAY */
+.teacher-detail-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(20, 15, 10, 0.6);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px 14px;
+  overflow-y: auto;
+}
+
+.teacher-detail {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  background: rgba(255, 250, 240, 0.97);
+  border: 3px solid var(--gold);
+  border-radius: 22px;
+  padding: 24px 20px;
+  box-shadow: 0 18px 40px rgba(20, 15, 10, 0.4);
+}
+
+.teacher-detail__close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: rgba(120, 110, 100, 0.15);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 1rem;
+  cursor: pointer;
+  color: var(--ink);
+}
+
+.teacher-detail__header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.teacher-detail__avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 3px solid var(--gold);
+  object-fit: cover;
+}
+
+.teacher-detail__header h2 {
+  margin: 0;
+  color: var(--twister-red);
+  font-size: 1.2rem;
+}
+
+.teacher-detail__meta {
+  margin: 2px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+
+.teacher-detail__summary {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.teacher-detail__stat {
+  flex: 1;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.6);
+  border: 2px dashed var(--gold);
+  border-radius: 14px;
+  padding: 10px 6px;
+}
+
+.teacher-detail__stat-value {
+  display: block;
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--ink);
+}
+
+.teacher-detail__stat-label {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--ink-soft);
+  margin-top: 2px;
+}
+
+.teacher-detail__history-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--verse-teal-dark);
+  margin: 0 0 10px;
+}
+
+.teacher-attempt-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.teacher-attempt {
+  background: rgba(255, 255, 255, 0.6);
+  border: 2px solid rgba(74, 51, 36, 0.15);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+
+.teacher-attempt__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.teacher-attempt__location {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--ink);
+}
+
+.tier-badge {
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 999px;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.tier-badge--perfect,
+.tier-badge--pass {
+  background: var(--guest-green-dark);
+}
+
+.tier-badge--close {
+  background: var(--gold-dark);
+}
+
+.tier-badge--fail {
+  background: var(--twister-red);
+}
+
+.tier-badge--timeout {
+  background: var(--twister-orange);
+}
+
+.teacher-attempt__twister,
+.teacher-attempt__transcript {
+  margin: 4px 0;
+  font-size: 0.85rem;
+  color: var(--ink);
+}
+
+.teacher-attempt__footer {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.teacher-attempt__time {
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+}
+
+.teacher-attempt__audio {
+  height: 32px;
+  max-width: 220px;
+}
+
+.teacher-attempt__no-audio {
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+@media (max-width: 480px) {
+  .teacher-detail { padding: 20px 16px; }
+  .teacher-detail__summary { flex-direction: column; }
+}
+
+/* School the teacher belongs to — they only see students from it. */
+.teacher-school-tag {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--verse-teal-dark);
+  background: rgba(79, 195, 201, 0.18);
+  border-radius: 999px;
+  padding: 2px 10px;
+  margin-top: 4px;
+  width: fit-content;
+}
+
+/* ---------- CSV export ---------- */
+/* Sits inside .teacher-filters, below the search box, because what it
+   exports is whatever those filters currently show. */
+.teacher-export {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.teacher-export__btn {
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 2px solid rgba(74, 51, 36, 0.2);
+  background: var(--accent, #7a2013);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+.teacher-export__btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.teacher-export__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.teacher-export__btn--secondary {
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--ink);
+}
+
+.teacher-export__note {
+  font-size: 0.8rem;
+  opacity: 0.75;
+  margin-left: auto;
+}
+
+@media (max-width: 480px) {
+  .teacher-export__btn { flex: 1; }
+  .teacher-export__note { margin-left: 0; width: 100%; }
+}
+
+/* ---------- Master access ---------- */
+/* Replaces the single-school tag in the header when a teacher can see
+   every school, so it is always obvious which scope is in effect. */
+.teacher-school-tag--master {
+  background: var(--accent, #7a2013);
+  color: #fff;
+}
+
+/* Which school a student belongs to. Only rendered under master access -
+   for a normal teacher every student is from their own school, so the
+   line would be noise. */
+.teacher-student-card__school {
+  display: block;
+  font-size: 0.72rem;
+  opacity: 0.7;
+  margin-top: 2px;
+}
+
+/* ---------- Student password reset ---------- */
+.teacher-detail__reset {
+  margin: 14px 0 4px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(74, 51, 36, 0.06);
+  border: 1px solid rgba(74, 51, 36, 0.18);
+}
+
+.teacher-detail__reset-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  opacity: 0.8;
+  margin-bottom: 8px;
+}
+
+.teacher-detail__reset-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.teacher-detail__reset-row input { flex: 1; min-width: 160px; }
+
+.teacher-detail__reset-msg {
+  margin: 10px 0 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+/* The success message contains the new password, because the teacher has
+   to read it out to the student. Styled to be noticed, not hidden. */
+.teacher-detail__reset-msg.is-ok {
+  background: rgba(31, 107, 49, 0.12);
+  border: 1px solid rgba(31, 107, 49, 0.4);
+  color: #1c5c2b;
+  font-weight: 700;
+}
+
+.teacher-detail__reset-msg.is-error {
+  background: rgba(160, 40, 30, 0.1);
+  border: 1px solid rgba(160, 40, 30, 0.35);
+  color: #8c2318;
+}
+
+/* ---------- Master access: students / teachers ---------- */
+.teacher-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.teacher-tabs__tab {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 2.5px solid var(--card-border);
+  background: var(--card-bg);
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(20, 15, 10, 0.15);
+}
+
+.teacher-tabs__tab.is-active {
+  background: linear-gradient(180deg, var(--verse-teal) 0%, var(--verse-teal-dark) 100%);
+  border-color: var(--verse-teal-dark);
+  color: #fff;
+}
+
+/* Waiting requests. Red so it's noticed from the students tab. */
+.teacher-tabs__count {
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--twister-red);
+  color: #fff;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+/* ---------- Teacher approvals ---------- */
+.teacher-approvals {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.teacher-approvals__group {
+  background: var(--card-bg);
+  backdrop-filter: blur(8px) saturate(1.1);
+  -webkit-backdrop-filter: blur(8px) saturate(1.1);
+  border: 3px solid var(--card-border);
+  border-radius: 20px;
+  padding: 14px 16px;
+}
+
+.teacher-approvals__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--verse-teal-dark);
+}
+
+.teacher-approvals__count {
+  padding: 0 8px;
+  border-radius: 999px;
+  background: rgba(79, 195, 201, 0.2);
+  font-size: 0.8rem;
+}
+
+.teacher-approvals__hint {
+  margin: 6px 0 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+.teacher-approvals__list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.teacher-approvals__group .teacher-empty {
+  padding: 10px 0 2px;
+  font-size: 0.85rem;
+}
+
+.teacher-approvals__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.teacher-approvals__review-error {
+  margin: 0;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: rgba(160, 40, 30, 0.1);
+  border: 1px solid rgba(160, 40, 30, 0.35);
+  color: #8c2318;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.teacher-request {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: rgba(255, 255, 255, 0.6);
+  border: 2px solid rgba(74, 51, 36, 0.15);
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+
+/* A waiting request is the one needing action. */
+.teacher-request--pending {
+  border-color: var(--gold);
+  background: rgba(255, 246, 214, 0.85);
+}
+
+.teacher-request__info {
+  flex: 1 1 220px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.teacher-request__name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-weight: 800;
+  font-size: 0.98rem;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.teacher-request__tag {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(79, 195, 201, 0.2);
+  color: var(--verse-teal-dark);
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.teacher-request__tag--admin {
+  background: var(--accent, #7a2013);
+  color: #fff;
+}
+
+.teacher-request__meta {
+  font-size: 0.8rem;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.teacher-request__meta--soft {
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+}
+
+.teacher-request__actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.teacher-request__btn {
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+.teacher-request__btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.teacher-request__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.teacher-request__btn--approve {
+  border: 2px solid var(--guest-green-dark);
+  background: var(--guest-green-dark);
+  color: #fff;
+}
+
+.teacher-request__btn--reject {
+  border: 2px solid rgba(160, 40, 30, 0.5);
+  background: rgba(255, 255, 255, 0.8);
+  color: #8c2318;
+}
+
+/* On phones a waiting request's two buttons share a full-width row. Only
+   those: a full-width "Bawiin" under every approved teacher would make
+   revoking the loudest thing on the list. */
+@media (max-width: 480px) {
+  .teacher-request--pending .teacher-request__actions { width: 100%; margin-left: 0; }
+  .teacher-request--pending .teacher-request__btn { flex: 1; }
+}
+
+/* ---------- Deleting a student (master access only) ---------- */
+/* Left on the list after a delete, since the panel that did it closes. */
+.teacher-list-notice {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  /* Near-opaque like the cards around it. A see-through tint let the
+     bunting in the background art run across the words. */
+  background: rgba(236, 247, 238, 0.96);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 2px solid rgba(31, 107, 49, 0.45);
+  box-shadow: 0 4px 10px rgba(20, 15, 10, 0.15);
+  color: #1c5c2b;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.teacher-detail__delete {
+  margin: 10px 0 18px;
+}
+
+/* Outlined and quiet until asked for: deleting is irreversible, so it
+   should never be the loudest thing in the panel. */
+.teacher-detail__delete-btn {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 2px solid rgba(160, 40, 30, 0.45);
+  background: rgba(255, 255, 255, 0.8);
+  color: #8c2318;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.teacher-detail__delete-btn:hover:not(:disabled) {
+  background: rgba(160, 40, 30, 0.08);
+}
+
+.teacher-detail__delete-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.teacher-detail__delete-btn--confirm {
+  border-color: #8c2318;
+  background: #a3281c;
+  color: #fff;
+}
+
+.teacher-detail__delete-btn--confirm:hover:not(:disabled) {
+  background: #8c2318;
+}
+
+.teacher-detail__delete-confirm {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(160, 40, 30, 0.07);
+  border: 2px solid rgba(160, 40, 30, 0.35);
+}
+
+.teacher-detail__delete-title {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #8c2318;
+}
+
+.teacher-detail__delete-text {
+  margin: 0 0 10px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.teacher-detail__delete-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}

@@ -1,0 +1,122 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function teacherPath(uid) {
+      return /databases/$(database)/documents/teachers/$(uid);
+    }
+
+    // An APPROVED teacher. Signing up only files a request (status
+    // "pending"), and the account sees no student data until the admin
+    // approves it. Records from before sign-ups were verified have no
+    // status and were already in use, so they count as approved - the
+    // admin can still revoke any of them.
+    //
+    // Costs one or two document reads per rule evaluation - negligible at
+    // classroom scale.
+    function isTeacher() {
+      return isSignedIn() &&
+        exists(teacherPath(request.auth.uid)) &&
+        get(teacherPath(request.auth.uid)).data.get('status', 'approved') == 'approved';
+    }
+
+    // The admin who approves teachers: an approved teacher whose record
+    // has isMaster. Nothing in the app can set that flag - it is only
+    // ever set by hand in the Firebase console.
+    function isAdmin() {
+      return isTeacher() &&
+        get(teacherPath(request.auth.uid)).data.get('isMaster', false) == true;
+    }
+
+    function isText(value, minSize, maxSize) {
+      return value is string && value.size() >= minSize && value.size() <= maxSize;
+    }
+
+    // The username shown to the admin must be the account's own login, so
+    // a request can't borrow someone else's name. Usernames map to the
+    // invented teacher domain (see authService.js); a real email address
+    // is used as is.
+    function isOwnLogin(username) {
+      return request.auth.token.email == username.lower() ||
+        request.auth.token.email == username.lower() + '@twisterverse-teacher.local';
+    }
+
+    // A sign-up request, exactly as TeacherLogin files it. Anything else -
+    // above all a record that arrives already approved, or carrying
+    // isMaster - is refused.
+    function isTeacherRequest(data) {
+      return data.keys().hasAll(['firstName', 'lastName', 'name', 'username', 'school', 'section', 'status', 'createdAt']) &&
+        data.keys().hasOnly(['firstName', 'middleName', 'lastName', 'name', 'username', 'school', 'grade', 'section', 'status', 'createdAt']) &&
+        isText(data.firstName, 1, 60) &&
+        isText(data.get('middleName', ''), 0, 60) &&
+        isText(data.lastName, 1, 60) &&
+        isText(data.name, 1, 200) &&
+        isText(data.username, 1, 254) &&
+        isOwnLogin(data.username) &&
+        isText(data.school, 1, 40) &&
+        isText(data.get('grade', ''), 0, 10) &&
+        isText(data.section, 1, 60) &&
+        data.status == 'pending' &&
+        data.createdAt == request.time;
+    }
+
+    // Student profiles (nickname, avatar, grade, section, gender)
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isTeacher();
+      // Never for an account with a teacher record, whatever its status.
+      // A real email address logs in on the student page too, and a
+      // teacher must not be filed as a student on the roster.
+      allow write: if isOwner(uid) && !exists(teacherPath(uid));
+    }
+
+    // Per-student level-completion progress
+    match /progress/{uid} {
+      allow read: if isOwner(uid) || isTeacher();
+      allow write: if isOwner(uid);
+    }
+
+    // Recitation attempts — append-only log, never editable once written,
+    // so a student can't quietly rewrite a failed attempt into a pass.
+    match /attempts/{attemptId} {
+      allow read: if isTeacher() ||
+        (isSignedIn() && resource.data.uid == request.auth.uid);
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // Teacher accounts and sign-up requests.
+    match /teachers/{uid} {
+      // Your own record - which is how the login screen learns whether a
+      // request has been approved - or, for the admin, every record.
+      allow read: if isOwner(uid) || isAdmin();
+
+      // Signing up files a pending request for your own account, and
+      // nothing more.
+      allow create: if isOwner(uid) && isTeacherRequest(request.resource.data);
+
+      // Only the admin decides, and only the decision changes: the status,
+      // who set it and when. Never on the admin's own record, so they
+      // can't lock themselves out, and never on another master record.
+      // A teacher can't edit their own record at all - it would let a
+      // rejected request mark itself pending again.
+      allow update: if isAdmin() &&
+        uid != request.auth.uid &&
+        resource.data.get('isMaster', false) != true &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['status', 'reviewedBy', 'reviewedAt']) &&
+        request.resource.data.status in ['approved', 'rejected'] &&
+        request.resource.data.reviewedBy == request.auth.uid &&
+        request.resource.data.reviewedAt == request.time;
+
+      allow delete: if false;
+    }
+  }
+}

@@ -1,0 +1,172 @@
+/* TeacherLogin.css — small additions on top of LoginPage.css's shared
+   card/input/button styles, since this screen intentionally reuses
+   that visual language rather than duplicating it. */
+
+.teacher-badge {
+  position: absolute;
+  top: 6%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(59, 42, 30, 0.75);
+  color: var(--gold);
+  font-weight: 800;
+  font-size: 0.9rem;
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 2px solid var(--gold);
+  z-index: 6;
+  white-space: nowrap;
+}
+
+/* ---------- Layout ----------
+   The student login pins its logo to the top of a fixed, non-scrolling
+   screen and its form to the bottom. Teacher sign-up can't live in that:
+   three name fields, a school and a section on top of the credentials
+   make a form tall enough to run under the badge, or off the top of a
+   short phone, where overflow: hidden would cut it off with no way to
+   scroll. So this screen stacks the badge over the form in normal flow -
+   centred when there is room, scrolling when there isn't. */
+.login-wrapper.teacher-login-wrapper {
+  height: auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: visible;
+  padding: 24px 16px;
+}
+
+.teacher-login-wrapper .login-overlay {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.teacher-login-wrapper .teacher-badge {
+  position: static;
+  transform: none;
+}
+
+.teacher-login-wrapper .form-container {
+  position: static;
+  transform: none;
+  width: 100%;
+  max-width: 380px;
+  padding: 0;
+}
+
+/* The shared input style leaves 42px on the left for the student login's
+   user/lock icons. There are no icons here, so that was just a gap. */
+.teacher-login-wrapper .auth-form input[type="text"],
+.teacher-login-wrapper .auth-form input[type="password"] {
+  padding-left: 18px;
+}
+
+/* Selects had no styling at all and rendered as small grey system
+   controls in the middle of the pill fields. */
+.teacher-login-wrapper .auth-form select {
+  width: 100%;
+  padding: 12px 40px 12px 18px;
+  font-size: 16px;
+  border-radius: 999px;
+  border: 2px solid rgba(74, 51, 36, 0.18);
+  outline: none;
+  color: var(--ink);
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%236e5340' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+      no-repeat right 18px center / 12px 8px,
+    rgba(255, 255, 255, 0.55);
+  -webkit-appearance: none;
+  appearance: none;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+/* Nothing chosen yet: the prompt option reads like a placeholder. */
+.teacher-login-wrapper .auth-form select:invalid {
+  color: var(--ink-soft);
+}
+
+.teacher-login-wrapper .auth-form select option {
+  color: var(--ink);
+}
+
+.teacher-login-wrapper .auth-form select:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(244, 196, 48, 0.28);
+}
+
+.teacher-login-wrapper .auth-form select:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.teacher-signup-note {
+  margin: 4px 4px 2px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+/* ---------- Request sent ---------- */
+.teacher-request-sent {
+  align-items: center;
+  text-align: center;
+  padding-top: 24px;
+}
+
+.teacher-request-sent__icon {
+  font-size: 2.4rem;
+  line-height: 1;
+}
+
+.teacher-request-sent__title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--twister-red);
+}
+
+.teacher-request-sent__text {
+  margin: 0 0 6px;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+/* Keeps .link-btn's gold, like "Guro? Mag-login dito" on the student
+   login. It used to be white, which vanished against the cream card. */
+.teacher-back-link {
+  margin-top: 4px;
+}
+
+/* ---------- Password reset ---------- */
+.teacher-reset-link {
+  display: block;
+  margin: 10px auto 0;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+/* Success/neutral counterpart to .error - a reset confirmation is not a
+   failure and should not be styled like one. */
+.form-notice {
+  margin: 10px 2px 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(31, 107, 49, 0.12);
+  border: 1px solid rgba(31, 107, 49, 0.4);
+  /* Dark green on the light auth card. A near-white was unreadable here:
+     the panel sits on cream, not on the dark page background. */
+  color: #1c5c2b;
+  font-weight: 600;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  text-align: center;
+}
