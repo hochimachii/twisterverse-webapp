@@ -299,9 +299,21 @@ enforces it:
   `status`, `reviewedBy` (must be the admin) and `reviewedAt` (must be the
   server time). The admin's own record and other master records can't be
   changed.
+- `firestore.rules` also refuses a student record for any account that has a
+  teacher record, whatever its status. See "Teachers on the student login"
+  below.
 - `storage.rules`: recordings are readable by approved teachers only.
 - `functions/index.js`: `resetStudentPassword` refuses teachers who aren't
   approved. The Admin SDK ignores the rules, so the check is repeated there.
+
+**Teachers on the student login.** Only plain usernames are kept apart by role,
+since they map to different invented domains. A real email address is one
+Firebase login on both pages, so a teacher's email logs in on the student page
+too. Found 2026-09-24: an approved teacher did exactly that, was sent to
+student Profile Setup, and could not save. The student page now sends a
+teacher to the teacher dashboard, or gives the same pending/rejected message
+the teacher page would. Profile Setup sends a teacher's session away too, and
+the rule above is the backstop.
 
 These rules close a hole in the version they replaced. That version let any
 signed-in user write their own teacher record, so any teacher could give
@@ -309,11 +321,12 @@ themselves `isMaster`, and anyone could make themselves a teacher.
 
 Tested before deploying with the Firebase Rules test API (`projects.test`,
 which evaluates a rules source against simulated requests without deploying).
-There were 68 Firestore cases: reads by every kind of account, sign-up
-requests with each field wrong, and every review path. There were 10 Storage
-cases. All passed. Run against the rules they replace, the same suites failed
-exactly the 34 + 2 security cases, which shows the tests can tell the
-difference.
+There are 77 Firestore cases: reads by every kind of account, sign-up
+requests with each field wrong, every review path, and student-record writes by
+every kind of account. There are 10 Storage cases. All pass. Each change was
+also run against the rules it replaced, and the suites failed exactly its new
+security cases: 34 + 2 on 2026-09-22, and the 5 teacher-as-student cases on
+2026-09-24. That shows the tests can tell the difference.
 
 **Accounts from before verification** have no `status` field. They count as
 approved everywhere (rules, function and app), so nobody was locked out when

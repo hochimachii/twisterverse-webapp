@@ -60,6 +60,23 @@ function teacherAccessError(code, message) {
   return err;
 }
 
+/** Why a teacher record can't open the dashboard yet, or null when it
+ *  can. Both login pages use it, so they always give the same answer. */
+export function teacherAccessProblem(teacher) {
+  const status = teacherStatus(teacher);
+  if (status === TEACHER_STATUS.approved) return null;
+  if (status === TEACHER_STATUS.pending) {
+    return teacherAccessError(
+      "teacher/pending",
+      "Naghihintay pa ng pag-apruba ng admin ang iyong account. Makakapag-login ka kapag naaprubahan na ito."
+    );
+  }
+  return teacherAccessError(
+    "teacher/rejected",
+    "Hindi pinahintulutan ang account na ito. Makipag-ugnayan sa admin."
+  );
+}
+
 /**
  * Files a teacher's sign-up request. The account is created, but it
  * cannot open the dashboard until the admin approves it, so the new
@@ -126,21 +143,10 @@ export async function validateTeacher(username, password) {
   }
 
   const data = snap.data();
-  const status = teacherStatus(data);
-
-  if (status === TEACHER_STATUS.pending) {
+  const problem = teacherAccessProblem(data);
+  if (problem) {
     await signOutUser();
-    throw teacherAccessError(
-      "teacher/pending",
-      "Naghihintay pa ng pag-apruba ng admin ang iyong account. Makakapag-login ka kapag naaprubahan na ito."
-    );
-  }
-  if (status !== TEACHER_STATUS.approved) {
-    await signOutUser();
-    throw teacherAccessError(
-      "teacher/rejected",
-      "Hindi pinahintulutan ang account na ito. Makipag-ugnayan sa admin."
-    );
+    throw problem;
   }
 
   return {

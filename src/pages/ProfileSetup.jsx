@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { saveUserProfile, isProfileComplete } from "../services/userService";
+import { getTeacherByUid } from "../services/teacherService";
 import { useAuth } from "../context/AuthContext";
 import "../styles/ProfileSetup.css";
 import backgroundImg from "../assets/login/background.PNG";
@@ -8,7 +9,7 @@ import { avatarSrc, AVATAR_OPTIONS } from "../data/avatars";
 import { SCHOOLS, gradesFor, sectionsFor } from "../data/schools";
 
 export default function ProfileSetup() {
-  const { uid, username } = useAuth();
+  const { uid, username, authLoading } = useAuth();
   const [fullName, setFullName] = useState("");
   const [school, setSchool] = useState("");
   const [avatar, setAvatar] = useState(AVATAR_OPTIONS[0]);
@@ -17,6 +18,24 @@ export default function ProfileSetup() {
   const [gender, setGender] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  // A teacher can arrive here from a session that began on the student
+  // login before it learned to send teachers away. Move them to their own
+  // dashboard instead of letting them fill in a student profile. The
+  // rules refuse that save anyway; this spares them the form. If the
+  // check itself fails, they stay, and the rules still hold.
+  useEffect(() => {
+    if (authLoading || !uid) return undefined;
+    let cancelled = false;
+    getTeacherByUid(uid)
+      .then((teacher) => {
+        if (!cancelled && teacher) navigate("/teacher/dashboard", { replace: true });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, uid, navigate]);
 
   // Grade and section are driven by the chosen school, so a student can
   // only ever land on a section that actually exists on their roster.

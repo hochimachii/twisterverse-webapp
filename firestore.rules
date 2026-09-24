@@ -71,7 +71,10 @@ service cloud.firestore {
     // Student profiles (nickname, avatar, grade, section, gender)
     match /users/{uid} {
       allow read: if isOwner(uid) || isTeacher();
-      allow write: if isOwner(uid);
+      // Never for an account with a teacher record, whatever its status.
+      // A real email address logs in on the student page too, and a
+      // teacher must not be filed as a student on the roster.
+      allow write: if isOwner(uid) && !exists(teacherPath(uid));
     }
 
     // Per-student level-completion progress

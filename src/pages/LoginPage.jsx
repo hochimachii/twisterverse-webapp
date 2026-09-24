@@ -6,7 +6,8 @@ import {
   getUserProfile,
   isProfileComplete
 } from "../services/userService";
-import { friendlyAuthError } from "../services/authService";
+import { friendlyAuthError, signOutUser } from "../services/authService";
+import { getTeacherByUid, teacherAccessProblem } from "../services/teacherService";
 import WelcomeOverlay from "../components/WelcomeOverlay";
 import "../styles/LoginPage.css";
 import backgroundImg from "../assets/login/background.PNG";
@@ -50,6 +51,23 @@ export default function LoginPage() {
         triggerWelcome(() => navigate("/profilesetup"));
       } else {
         const user = await validateUser(username.trim(), password);
+
+        // Only plain usernames are kept apart by role. A real email
+        // address is one login on both pages, so a teacher's email works
+        // here too - and used to drop them into a STUDENT profile. Send
+        // teachers to their own dashboard, or tell them why they can't
+        // open it yet, exactly as the teacher page would.
+        const teacher = await getTeacherByUid(user.uid);
+        if (teacher) {
+          const problem = teacherAccessProblem(teacher);
+          if (problem) {
+            await signOutUser();
+            throw problem;
+          }
+          navigate("/teacher/dashboard");
+          return;
+        }
+
         const profile = await getUserProfile(user.uid);
         const nextRoute = isProfileComplete(profile) ? "/dashboard" : "/profilesetup";
         triggerWelcome(() => navigate(nextRoute));
