@@ -326,3 +326,56 @@ exports.resetStudentPassword = onCall(
     return { ok: true, username: studentSnap.data().username || null };
   }
 );
+
+// ---------------------------------------------------------------------
+// deleteStudent
+//
+// For the admin only. Removes a student completely - login, recordings,
+// attempts, progress and profile - so a test account or a student who
+// has left is gone rather than hidden. A login can only be deleted by
+// the Admin SDK, and firestore.rules keep attempts append-only for
+// everyone else, which is why this is a function and not client code.
+// The steps, and why they run in that order, are in students.js.
+// ---------------------------------------------------------------------
+
+const { assertIsAdmin, deleteStudentData } = require("./students");
+
+exports.deleteStudent = onCall(
+  { enforceAppCheck: ENFORCE_APP_CHECK },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Kailangan mong maka-login.");
+    }
+
+    const { studentUid } = request.data || {};
+    if (typeof studentUid !== "string" || !studentUid.trim()) {
+      throw new HttpsError("invalid-argument", "Walang piniling mag-aaral.");
+    }
+
+    const db = admin.firestore();
+    await assertIsAdmin(db, request.auth.uid);
+
+    let result;
+    try {
+      result = await deleteStudentData(
+        { db, auth: admin.auth(), bucket: admin.storage().bucket() },
+        studentUid
+      );
+    } catch (err) {
+      if (err instanceof HttpsError) throw err;
+      console.error("deleteStudent failed:", err);
+      throw new HttpsError(
+        "internal",
+        "Hindi nabura ang mag-aaral. Subukan ulit."
+      );
+    }
+
+    // Who deleted whom and how much - never the student's data itself.
+    console.log(
+      `deleteStudent: admin=${request.auth.uid} student=${studentUid} ` +
+        `attempts=${result.attempts} recordings=${result.recordings}`
+    );
+
+    return { ok: true, ...result };
+  }
+);

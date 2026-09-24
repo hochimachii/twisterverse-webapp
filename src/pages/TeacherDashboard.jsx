@@ -13,6 +13,7 @@ import {
 import {
   getTeacherByUid,
   resetStudentPassword,
+  deleteStudent,
   getAllTeachers,
   reviewTeacher,
   teacherStatus,
@@ -163,6 +164,10 @@ export default function TeacherDashboard() {
   // Password reset for the student currently open in the detail panel.
   const [resetPassword, setResetPassword] = useState("");
   const [resetState, setResetState] = useState({ busy: false, msg: "", ok: false });
+  // Master access only: deleting the student open in the detail panel,
+  // and the note left on the list once one is gone.
+  const [deleteState, setDeleteState] = useState({ confirming: false, busy: false, msg: "" });
+  const [listNotice, setListNotice] = useState("");
   // Master access only: which list is showing, and the teacher accounts
   // the admin approves.
   const [view, setView] = useState("students");
@@ -370,6 +375,35 @@ export default function TeacherDashboard() {
     }
   };
 
+  // The panel's actions belong to one student. Without this, a delete
+  // left half-confirmed on one student was already armed on the next,
+  // and a new password shown for one appeared under another.
+  useEffect(() => {
+    setDeleteState({ confirming: false, busy: false, msg: "" });
+    setResetPassword("");
+    setResetState({ busy: false, msg: "", ok: false });
+    if (selectedUid) setListNotice("");
+  }, [selectedUid]);
+
+  const handleDeleteStudent = async () => {
+    if (!selectedStudent) return;
+    const target = selectedStudent;
+    setDeleteState({ confirming: true, busy: true, msg: "" });
+    try {
+      await deleteStudent(target.uid);
+      setStudents((list) => list.filter((s) => s.uid !== target.uid));
+      setAllAttempts((list) => list.filter((a) => a.uid !== target.uid));
+      setSelectedUid(null);
+      setListNotice(`Nabura na si ${displayName(target.profile) || target.username}.`);
+    } catch (err) {
+      setDeleteState({
+        confirming: true,
+        busy: false,
+        msg: err?.message || "Hindi nabura ang mag-aaral. Subukan ulit."
+      });
+    }
+  };
+
   const selectedStudent = students.find((s) => s.uid === selectedUid) || null;
   const selectedSummary = selectedStudent
     ? summarizeStudent(selectedStudent.uid, allAttempts)
@@ -535,6 +569,12 @@ export default function TeacherDashboard() {
               </div>
             </section>
 
+            {listNotice && (
+              <p className="teacher-list-notice" role="status">
+                {listNotice}
+              </p>
+            )}
+
             {/* STUDENT LIST */}
             <section className="teacher-student-list">
               {filteredStudents.length === 0 ? (
@@ -652,6 +692,56 @@ export default function TeacherDashboard() {
                 </p>
               )}
             </div>
+
+            {isMaster && (
+              <div className="teacher-detail__delete">
+                {deleteState.confirming ? (
+                  <div className="teacher-detail__delete-confirm">
+                    <p className="teacher-detail__delete-title">
+                      Burahin nang tuluyan si {displayName(selectedStudent.profile)}?
+                    </p>
+                    <p className="teacher-detail__delete-text">
+                      {selectedSummary.totalAttempts > 0
+                        ? `Mabubura ang kanyang login, profile, progreso, ${selectedSummary.totalAttempts} na pagsubok at ang mga recording nito.`
+                        : "Mabubura ang kanyang login, profile at progreso."}{" "}
+                      Hindi na ito maibabalik. Kung kailangan mo pa ang kanyang
+                      datos, i-export muna ito.
+                    </p>
+                    <div className="teacher-detail__delete-actions">
+                      <button
+                        type="button"
+                        className="teacher-detail__delete-btn teacher-detail__delete-btn--confirm"
+                        onClick={handleDeleteStudent}
+                        disabled={deleteState.busy}
+                      >
+                        {deleteState.busy ? "Binubura\u2026" : "Oo, Burahin"}
+                      </button>
+                      <button
+                        type="button"
+                        className="teacher-detail__delete-btn"
+                        onClick={() => setDeleteState({ confirming: false, busy: false, msg: "" })}
+                        disabled={deleteState.busy}
+                      >
+                        Huwag
+                      </button>
+                    </div>
+                    {deleteState.msg && (
+                      <p className="teacher-detail__reset-msg is-error" role="alert">
+                        {deleteState.msg}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="teacher-detail__delete-btn"
+                    onClick={() => setDeleteState({ confirming: true, busy: false, msg: "" })}
+                  >
+                    {"\uD83D\uDDD1\uFE0F"} Burahin ang Mag-aaral
+                  </button>
+                )}
+              </div>
+            )}
 
             <div className="teacher-detail__summary">
               <div className="teacher-detail__stat">

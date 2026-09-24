@@ -679,3 +679,85 @@
   .teacher-request--pending .teacher-request__actions { width: 100%; margin-left: 0; }
   .teacher-request--pending .teacher-request__btn { flex: 1; }
 }
+
+/* ---------- Deleting a student (master access only) ---------- */
+/* Left on the list after a delete, since the panel that did it closes. */
+.teacher-list-notice {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  /* Near-opaque like the cards around it. A see-through tint let the
+     bunting in the background art run across the words. */
+  background: rgba(236, 247, 238, 0.96);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 2px solid rgba(31, 107, 49, 0.45);
+  box-shadow: 0 4px 10px rgba(20, 15, 10, 0.15);
+  color: #1c5c2b;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.teacher-detail__delete {
+  margin: 10px 0 18px;
+}
+
+/* Outlined and quiet until asked for: deleting is irreversible, so it
+   should never be the loudest thing in the panel. */
+.teacher-detail__delete-btn {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 2px solid rgba(160, 40, 30, 0.45);
+  background: rgba(255, 255, 255, 0.8);
+  color: #8c2318;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.teacher-detail__delete-btn:hover:not(:disabled) {
+  background: rgba(160, 40, 30, 0.08);
+}
+
+.teacher-detail__delete-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.teacher-detail__delete-btn--confirm {
+  border-color: #8c2318;
+  background: #a3281c;
+  color: #fff;
+}
+
+.teacher-detail__delete-btn--confirm:hover:not(:disabled) {
+  background: #8c2318;
+}
+
+.teacher-detail__delete-confirm {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(160, 40, 30, 0.07);
+  border: 2px solid rgba(160, 40, 30, 0.35);
+}
+
+.teacher-detail__delete-title {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #8c2318;
+}
+
+.teacher-detail__delete-text {
+  margin: 0 0 10px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.teacher-detail__delete-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}

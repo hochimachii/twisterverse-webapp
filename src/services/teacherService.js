@@ -205,3 +205,13 @@ export async function resetStudentPassword(studentUid, newPassword) {
   const res = await call({ studentUid, newPassword });
   return res.data;
 }
+
+/** Deletes a student completely: login, recordings, attempts, progress
+ *  and profile. There is no undo. Only the admin may, and the Cloud
+ *  Function is what checks that - nothing here can. */
+export async function deleteStudent(studentUid) {
+  const fns = getFunctions(app, FUNCTIONS_REGION);
+  const call = httpsCallable(fns, "deleteStudent");
+  const res = await call({ studentUid });
+  return res.data;
+}

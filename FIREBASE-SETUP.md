@@ -357,6 +357,49 @@ the rules section above: compare what is live first.
 
 ---
 
+## Deleting students
+
+Added 2026-09-24. The admin (a teacher with `isMaster`) can delete a student
+from that student's panel in the Teacher Dashboard: **Burahin ang Mag-aaral**,
+then **Oo, Burahin** to confirm. Other teachers don't see the button, and the
+function refuses them anyway.
+
+It deletes everything, through the `deleteStudent` Cloud Function (logic in
+`functions/students.js`), in this order:
+
+1. the login, so the student can't sign back in partway, and the username is
+   free again afterwards
+2. their recordings, `attempts/{uid}/` in Storage
+3. every attempt with their uid
+4. `progress/{uid}`
+5. `users/{uid}`, last. A delete that fails partway leaves the student on the
+   dashboard, and deleting them again finishes the job.
+
+There is no undo, so export first if the data is still needed. All recordings
+were in Storage when this shipped (none left on Cloudinary), so a delete
+removes every recording.
+
+It is a function because only the Admin SDK can delete someone else's login,
+and `firestore.rules` keep attempts append-only for everyone else. Functions
+run as the default compute service account, which has Editor on the project.
+That covers Auth, Firestore and Storage. If that role is ever narrowed,
+deleting needs Firebase Authentication Admin, Cloud Datastore User and Storage
+Object Admin.
+
+Each delete is logged: who deleted whom, and how many attempts and recordings.
+The student's data itself is never logged:
+
+```bash
+firebase functions:log --only deleteStudent
+```
+
+A student still playing when they are deleted keeps a valid session until their
+token expires, at most an hour. An attempt or progress update saved in that
+window is left without a login. The dashboard never lists it, since nothing
+recreates the `users` record during play.
+
+---
+
 ## Things worth knowing
 
 **Region has to match in two places.** `REGION` in `functions/index.js` and
