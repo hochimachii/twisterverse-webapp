@@ -17,6 +17,7 @@ import {
 import { scoreRecitation, tierForSimilarity, tokenizeWords } from "../utils/speechScoring";
 import { FEATURES } from "../config";
 import { calculateScore } from "../utils/scoring";
+import { reciteSecondsFor } from "../utils/reciteTime";
 import Tutorial, { hasSeenTutorial, markTutorialSeen } from "../components/Tutorial";
 import "../styles/TwisterActivity.css";
 
@@ -32,8 +33,6 @@ const TWISTY_SPRITES = {
   mad: twistyMad
 };
 
-const RECITE_SECONDS = 5;
-
 export default function TwisterActivity() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -44,6 +43,8 @@ export default function TwisterActivity() {
   const currentTwister = worldData?.twisters[level - 1];
   // The level's recorded model reading, or null where none exists yet.
   const voiceSrc = twisterVoice(world, level);
+  // Time allowed to recite, sized to the line's length (see reciteTime.js).
+  const reciteSeconds = reciteSecondsFor(currentTwister || "");
 
   // Platforms where the browser's Web Speech API is unavailable
   // (iOS/Safari, Messenger/Facebook in-app browsers) record audio and
@@ -88,7 +89,10 @@ export default function TwisterActivity() {
   const [feedbackTier, setFeedbackTier] = useState("");
   const [showValidation, setShowValidation] = useState(false);
   const [checking, setChecking] = useState(false);
-  const [secondsLeft, setSecondsLeft] = useState(RECITE_SECONDS);
+  const [secondsLeft, setSecondsLeft] = useState(reciteSeconds);
+  // True when the last try used all its time. It is still graded - it
+  // just earns no speed bonus - and the student is told why.
+  const [ranOutOfTime, setRanOutOfTime] = useState(false);
   const [earnedKey, setEarnedKey] = useState(null);
   const [recording, setRecording] = useState(false);
   const [heardText, setHeardText] = useState("");
@@ -117,10 +121,6 @@ export default function TwisterActivity() {
   // True once an attempt has been scored, which freezes the displayed
   // transcript so it always matches what the score was based on.
   const gradedRef = useRef(false);
-  // Set when an attempt ends before its recording is worth
-  // transcribing (a timeout). The recorder still has to shut down
-  // cleanly, so this is a flag rather than dropping the onstop handler.
-  const skipTranscriptionRef = useRef(false);
   // The live microphone stream. Both recorders release their own stream
   // in onstop, but onstop never runs if an attempt is abandoned - the
   // student leaves the page, or moves to the next level (same route, so
@@ -130,7 +130,7 @@ export default function TwisterActivity() {
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const formatRef = useRef(pickRecordingFormat());
-  const finishedAtSecondsRef = useRef(RECITE_SECONDS);
+  const finishedAtSecondsRef = useRef(reciteSeconds);
   // Resolves to a base64 data URL for the current attempt's recording,
   // or null when audio capture is off/unavailable.
   const audioPromiseRef = useRef(null);
@@ -278,7 +278,8 @@ export default function TwisterActivity() {
     setFeedbackTier("");
     setShowValidation(false);
     setChecking(false);
-    setSecondsLeft(RECITE_SECONDS);
+    setSecondsLeft(reciteSeconds);
+    setRanOutOfTime(false);
     setEarnedKey(null);
     setHeardText("");
     setLastScore(null);
@@ -289,7 +290,7 @@ export default function TwisterActivity() {
     transcriptRef.current = "";
     finalTranscriptRef.current = "";
     gradedRef.current = false;
-  }, [resetTranscript, releaseMicrophone]);
+  }, [resetTranscript, releaseMicrophone, reciteSeconds]);
 
   useEffect(() => {
     resetForLevel();
@@ -301,7 +302,7 @@ export default function TwisterActivity() {
   // ---------- Scoring / result handling ----------
 
   const finishAttempt = useCallback(
-    async (spokenText, forcedTier) => {
+    async (spokenText) => {
       gradedRef.current = true;
       setChecking(false);
       setShowValidation(true);
@@ -310,21 +311,13 @@ export default function TwisterActivity() {
       const attemptNumber = attempts + 1;
       setAttempts(attemptNumber);
 
-      // Timed out — automatic fail regardless of what was said.
-      if (forcedTier === "timeout") {
-        setFeedback("\u23F0 Ubos na ang oras! Subukan ulit nang mas mabilis.");
-        setFeedbackTier("timeout");
-        logAttempt({
-          uid, username, world, level,
-          twister: currentTwister,
-          transcript: spokenText,
-          similarity: 0,
-          tier: "timeout",
-          points: 0,
-          audioDataUrl: await getCapturedAudio()
-        });
-        return;
-      }
+      // Running out of time used to fail a try outright, and on phones the
+      // recording was thrown away unheard: students who had said the line
+      // perfectly, but not tapped Itigil, saw "Narinig: -" and took it to
+      // mean the app couldn't hear them. Now that recording is graded like
+      // any other. Using all the time only costs the speed bonus.
+      const timedOut = finishedAtSecondsRef.current <= 0;
+      setRanOutOfTime(timedOut);
 
       // Nothing captured — a mic/engine failure, NOT a wrong recitation,
       // so it isn't logged as a failed attempt against the student.
@@ -344,7 +337,7 @@ export default function TwisterActivity() {
       if (tier === "perfect" || tier === "pass") {
         const scoreResult = calculateScore({
           secondsLeft: finishedAtSecondsRef.current,
-          totalSeconds: RECITE_SECONDS,
+          totalSeconds: reciteSeconds,
           attempts: attemptNumber,
           tier
         });
@@ -369,11 +362,12 @@ export default function TwisterActivity() {
         similarity,
         tier,
         points,
+        timedOut,
         audioDataUrl: await getCapturedAudio()
       });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [attempts, currentTwister, uid, username, world, level]
+    [attempts, currentTwister, uid, username, world, level, reciteSeconds]
   );
 
   const saveProgress = async (points) => {
@@ -472,7 +466,6 @@ export default function TwisterActivity() {
 
   const startRecording = async () => {
     audioChunksRef.current = [];
-    skipTranscriptionRef.current = false;
     // The transcription recording doubles as the teacher's playback copy.
     // It's the same audio, already in hand — there's no reason to ask the
     // student's microphone to do the job twice (and on Android it can't:
@@ -503,13 +496,6 @@ export default function TwisterActivity() {
       // can return early — a timed-out or silent attempt is often the one
       // a teacher most wants to listen back to.
       if (audioResolveRef.current) audioResolveRef.current(blob);
-
-      // Timed out: graded already, nothing to transcribe, but the stream
-      // above still had to be released.
-      if (skipTranscriptionRef.current) {
-        skipTranscriptionRef.current = false;
-        return;
-      }
 
       // A silent recording must never reach the recognizer: it invents
       // confident nonsense from silence, which would then be scored as a
@@ -573,8 +559,9 @@ export default function TwisterActivity() {
     setFeedbackTier("");
     setShowValidation(false);
     setHeardText("");
-    setSecondsLeft(RECITE_SECONDS);
-    finishedAtSecondsRef.current = RECITE_SECONDS;
+    setSecondsLeft(reciteSeconds);
+    finishedAtSecondsRef.current = reciteSeconds;
+    setRanOutOfTime(false);
 
     if (useServerMode) {
       try {
@@ -645,43 +632,11 @@ export default function TwisterActivity() {
     return () => clearInterval(interval);
   }, [isActive]);
 
+  // Out of time: stop exactly as if Itigil had been tapped, so the try is
+  // still graded - it just earns no speed bonus. This used to fail the try
+  // without grading it, and on phones threw the recording away unheard.
   useEffect(() => {
-    if (isActive && secondsLeft === 0) {
-      finishedAtSecondsRef.current = 0;
-      awaitingResultRef.current = false;
-      attemptActiveRef.current = false;
-      wasListeningRef.current = false;
-      if (useServerMode) {
-        const rec = mediaRecorderRef.current;
-        if (rec && rec.state !== "inactive") {
-          // Skip transcription — it's already a fail — but let onstop run,
-          // so the microphone stream is released and the recording still
-          // reaches the teacher's log. Dropping the handler here left the
-          // mic open after every timed-out attempt.
-          skipTranscriptionRef.current = true;
-          rec.stop();
-        } else if (audioResolveRef.current) {
-          audioResolveRef.current(null);
-        }
-        setRecording(false);
-      } else {
-        try {
-          SpeechRecognition.stopListening();
-        } catch (err) {
-          console.error(err);
-        }
-        // Also stop the side recorder — without this the mic stays open
-        // after a timeout and its promise never resolves.
-        if (captureAudioAlongside) stopSideRecording();
-      }
-      // Pass whatever was captured so far: the tier is a forced fail
-      // regardless, but the student and the teacher's attempt log both
-      // benefit from seeing how far they actually got.
-      finishAttempt(
-        finalTranscriptRef.current || transcriptRef.current || "",
-        "timeout"
-      );
-    }
+    if (isActive && secondsLeft === 0) handleStop();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [secondsLeft, isActive]);
 
@@ -874,13 +829,18 @@ export default function TwisterActivity() {
                     <div className="recite-timer" role="timer">
                       <div
                         className={`recite-timer__bar ${secondsLeft <= 2 ? "recite-timer__bar--urgent" : ""}`}
-                        style={{ width: `${(secondsLeft / RECITE_SECONDS) * 100}%` }}
+                        style={{ width: `${(secondsLeft / reciteSeconds) * 100}%` }}
                       />
                       <span className="recite-timer__label">{secondsLeft}s</span>
                     </div>
                   </>
                 )}
               </div>
+              {isActive && (
+                <p className="listen-hint">
+                  {"Pindutin ang \u201CItigil\u201D kapag tapos ka na."}
+                </p>
+              )}
               {!isActive && !heardVoice && (
                 <p className="listen-hint">
                   {voiceState === "blocked"
@@ -900,6 +860,11 @@ export default function TwisterActivity() {
             <p className="dialogue-sub">
               <strong>Narinig:</strong> {heardText || "\u2014"}
             </p>
+            {ranOutOfTime && (
+              <p className="dialogue-sub dialogue-sub--time">
+                {"\u23F0 Naubos ang oras. Pindutin ang \u201CItigil\u201D pagkatapos mong bigkasin para may dagdag na puntos sa bilis."}
+              </p>
+            )}
 
             {lastScore && isSuccess && (
               <div className="score-breakdown">

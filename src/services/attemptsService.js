@@ -30,6 +30,7 @@ export async function logAttempt({
   similarity,
   tier,
   points,
+  timedOut,
   audioDataUrl
 }) {
   if (!uid) {
@@ -69,6 +70,9 @@ export async function logAttempt({
     // Older records have no points field - treat missing as unknown
     // rather than zero when reading them back.
     points: typeof points === "number" ? points : null,
+    // The try used all its time. Graded like any other since 2026-09-29;
+    // before that it was stored as tier "timeout" with nothing heard.
+    timedOut: timedOut === true,
     // Path, not a URL. Attempts written before the move to Firebase
     // Storage carry a Cloudinary `audioUrl` instead; the dashboard reads
     // whichever is present, and append-only rules mean the old ones can

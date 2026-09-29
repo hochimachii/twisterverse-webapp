@@ -46,9 +46,9 @@ const STEPS = [
   },
   {
     icon: "\u23F1\uFE0F",
-    title: "May 5 segundo ka",
+    title: "Bantayan ang oras",
     body:
-      "Bigkasin ang buong pangungusap nang mabilis at malinaw bago maubos ang oras. Kapag naubos ang oras, kailangan mong ulitin."
+      "Mas mahaba ang hamon, mas mahaba ang oras mo. Pagkatapos mong bigkasin, pindutin agad ang \u201CItigil\u201D. Kapag naubos ang oras, susuriin pa rin ang nabigkas mo."
   },
   {
     icon: "\u2B50",

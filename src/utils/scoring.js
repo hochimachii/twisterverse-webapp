@@ -1,9 +1,11 @@
 // src/utils/scoring.js
 //
-// Points awarded per completed level, based on how much of the 5-second
-// window was left when the student finished and how many attempts that
-// level took. Rewards speed and fluency (the actual skill a tongue
-// twister trains) without punishing a student into a dead end.
+// Points awarded per completed level, based on how much of the level's
+// time was left when the student finished (see reciteTime.js) and how
+// many attempts that level took. Rewards speed and fluency (the actual
+// skill a tongue twister trains) without punishing a student into a dead
+// end. A student who uses all the time still passes on accuracy; they
+// just earn no speed bonus.
 
 export const BASE_POINTS = 100;
 export const SPEED_BONUS_MAX = 50;   // full bonus for finishing instantly

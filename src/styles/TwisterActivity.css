@@ -212,6 +212,15 @@
   margin: 4px 0 0;
 }
 
+/* Shown when a try used all its time: it was still graded, but earned no
+   speed bonus. Gold, so it reads as advice rather than as an error. */
+.dialogue-sub--time {
+  margin-top: 8px;
+  color: var(--gold);
+  font-weight: 700;
+  line-height: 1.4;
+}
+
 .dialogue-checking {
   margin-top: 10px;
   padding: 10px 14px;
