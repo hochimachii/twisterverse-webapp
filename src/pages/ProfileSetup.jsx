@@ -7,6 +7,7 @@ import "../styles/ProfileSetup.css";
 import backgroundImg from "../assets/login/background.PNG";
 import { avatarSrc, AVATAR_OPTIONS } from "../data/avatars";
 import { SCHOOLS, gradesFor, sectionsFor } from "../data/schools";
+import MusicToggle from "../components/MusicToggle";
 
 export default function ProfileSetup() {
   const { uid, username, authLoading } = useAuth();
@@ -88,6 +89,8 @@ export default function ProfileSetup() {
       className="profile-bg"
       style={{ backgroundImage: `url(${backgroundImg})` }}
     >
+      <MusicToggle className="music-toggle--corner" />
+
       <div className="profile-wrapper">
         <h2>Gawin ang Iyong Profile</h2>
         <form onSubmit={handleSubmit}>

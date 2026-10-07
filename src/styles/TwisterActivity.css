@@ -55,6 +55,14 @@
   box-shadow: 0 1px 0 var(--gold-dark), 0 2px 5px rgba(201, 143, 16, 0.2);
 }
 
+/* The music toggle mirrors it, top right. On landscape screens it stays
+   in the screen's corner rather than the art card's (see the markup). */
+.activity-scene > .music-toggle--corner {
+  top: 18px;
+  right: 18px;
+  z-index: 20;
+}
+
 /* The guide stands here before an attempt, presenting the challenge.
    Unlike Twisty's sprite, guide art is full-body, so no crop-hiding
    trick is needed — she just stands naturally at the scene's base. */

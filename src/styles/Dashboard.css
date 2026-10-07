@@ -55,6 +55,13 @@
   margin: 0;
 }
 
+/* The music toggle and Lumabas, kept together at the header's end. */
+.dashboard-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .header-btn {
   background: linear-gradient(180deg, var(--verse-teal) 0%, var(--verse-teal-dark) 100%);
   color: #fff;

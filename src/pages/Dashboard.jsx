@@ -7,6 +7,7 @@ import { WORLDS, totalLevelCount } from "../data/worlds";
 import "../styles/Dashboard.css";
 import backgroundImg from "../assets/login/background.PNG";
 import { avatarSrc } from "../data/avatars";
+import MusicToggle from "../components/MusicToggle";
 
 // Thematic rank titles, topping out with "Master ng Diksiyon" — matching
 // the title Twisty earns at the end of the client's story script.
@@ -129,9 +130,12 @@ export default function Dashboard() {
         {/* HEADER SECTION */}
         <header className="dashboard-header">
           <h1 className="dashboard-title">Maligayang pagbabalik, {displayName(profile)}!</h1>
-          <button className="header-btn header-btn--signout" onClick={handleSignOut}>
-            {"\uD83D\uDEAA"} Lumabas
-          </button>
+          <div className="dashboard-header__actions">
+            <MusicToggle className="music-toggle--header" />
+            <button className="header-btn header-btn--signout" onClick={handleSignOut}>
+              {"\uD83D\uDEAA"} Lumabas
+            </button>
+          </div>
         </header>
 
         {/* PROFILE CARD */}

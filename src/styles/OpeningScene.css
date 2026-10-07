@@ -23,7 +23,8 @@
 .opening-skip-btn {
   position: absolute;
   top: 18px;
-  right: 18px;
+  /* Steps aside for the music toggle, which takes the corner. */
+  right: calc(18px + var(--music-toggle-size, 38px) + 8px);
   z-index: 30;
   background: rgba(255, 250, 240, 0.85);
   backdrop-filter: blur(6px);
@@ -39,6 +40,12 @@
 }
 
 .opening-skip-btn:hover { filter: brightness(1.05); }
+
+/* The music toggle, level with Laktawan. */
+.opening-scene > .music-toggle--corner {
+  top: 18px;
+  right: 18px;
+}
 
 /* ---------- Stage ---------- */
 .opening-stage {

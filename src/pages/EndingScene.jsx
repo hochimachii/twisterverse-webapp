@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { hasSeenEnding, markEndingSeen } from "../services/progressService";
+import MusicToggle from "../components/MusicToggle";
 import endingArt from "../assets/twisty/ending_sequence.PNG";
 import "../styles/EndingScene.css";
 
@@ -230,6 +231,8 @@ export default function EndingScene() {
           Laktawan
         </button>
       )}
+
+      <MusicToggle className="music-toggle--corner" />
 
       <div className="ending-scene__progress" aria-hidden="true">
         {BEATS.map((_, i) => (

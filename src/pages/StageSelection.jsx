@@ -5,6 +5,7 @@ import pageBg from "../assets/login/background.PNG";
 import { WORLDS, getWorld } from "../data/worlds";
 import { useAuth } from "../context/AuthContext";
 import { loadProgress, getSeenIntros, markIntroSeen } from "../services/progressService";
+import MusicToggle from "../components/MusicToggle";
 
 const SEEN_UNLOCKS_KEY = "seenUnlockedWorldCount";
 // Cache only. The authoritative list is on the student's progress
@@ -278,6 +279,8 @@ export default function StageSelection() {
 
   return (
     <div className="stage-bg" style={{ backgroundImage: `url(${pageBg})` }}>
+      <MusicToggle className="music-toggle--corner" />
+
       <div className="stage-wrapper">
 
         <h1>Mapa ng Twisterverse</h1>

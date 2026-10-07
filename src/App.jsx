@@ -2,6 +2,7 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import MusicPlayer from "./components/MusicPlayer";
 import { AuthProvider } from "./context/AuthContext";
+import { MusicProvider, useMusic } from "./context/MusicContext";
 import "./styles/theme.css";
 import "./styles/AppFrame.css";
 
@@ -39,6 +40,10 @@ function AppRoutes() {
   const musicDucked =
     location.pathname === "/intro" || location.pathname === "/activity";
 
+  // The music can also be switched off altogether, from the button every
+  // screen shows at the top right (MusicToggle). Remembered on the device.
+  const { muted: musicMuted } = useMusic();
+
   // Every student screen sits inside .app-frame, the query container the
   // page stylesheets size themselves against - removing the wrapper would
   // silently switch off all of their responsive rules. Screens used to be
@@ -50,7 +55,7 @@ function AppRoutes() {
 
   return (
     <>
-      <MusicPlayer src={musicSrc} ducked={musicDucked} />
+      <MusicPlayer src={musicSrc} ducked={musicDucked} muted={musicMuted} />
       <div className={isTeacherView ? undefined : "app-frame"}>
       <Routes>
         {/* Entry route */}
@@ -80,9 +85,11 @@ function AppRoutes() {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
+      <MusicProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </MusicProvider>
     </AuthProvider>
   );
 }

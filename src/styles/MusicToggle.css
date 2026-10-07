@@ -1,0 +1,100 @@
+/* MusicToggle.css - the music on/off button (MusicToggle.jsx).
+
+   Every screen with music places its own copy at the top right. The base
+   look is the cream pill of the scenes' Bumalik sa Mundo and Laktawan
+   buttons it sits beside; in the dashboards' header it wears the header's
+   bevel instead. Screens fine-tune the corner offsets in their own
+   stylesheet where a neighbour needs lining up with. */
+
+:root {
+  /* Also read by screens whose own top-right button steps aside for it. */
+  --music-toggle-size: 38px;
+}
+
+.music-toggle {
+  /* Painted under the slash when off; see .music-toggle__gap. */
+  --music-toggle-bg: rgba(255, 250, 240, 0.9);
+  flex: none;
+  width: var(--music-toggle-size);
+  height: var(--music-toggle-size);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 2.5px solid var(--card-border);
+  border-radius: 50%;
+  background: var(--music-toggle-bg);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: 0 3px 0 var(--gold-dark), 0 5px 8px rgba(201, 143, 16, 0.25);
+  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.music-toggle svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+.music-toggle:hover { filter: brightness(1.05); }
+.music-toggle:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--gold-dark), 0 2px 5px rgba(201, 143, 16, 0.2);
+}
+.music-toggle:focus-visible {
+  outline: 3px solid var(--verse-teal-dark);
+  outline-offset: 2px;
+}
+
+/* Off: the note is crossed out and the button steps back a little. */
+.music-toggle--off { color: var(--ink-soft); }
+
+.music-toggle__gap {
+  stroke: var(--music-toggle-bg);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.music-toggle__slash {
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+/* ---------- Placements ---------- */
+
+/* Top-right corner of the screen - or of the art card, on landscape
+   screens where a story scene splits in two. */
+.music-toggle--corner {
+  position: absolute;
+  top: calc(14px + env(safe-area-inset-top, 0px));
+  right: 14px;
+  z-index: 30;
+}
+
+/* In the dashboards' header beside Lumabas, as one of its bevel buttons:
+   teal while the music plays, the grey of the Bumalik buttons when off. */
+.music-toggle--header {
+  border: none;
+  background: linear-gradient(180deg, var(--verse-teal) 0%, var(--verse-teal-dark) 100%);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  color: #fff;
+  box-shadow: 0 4px 0 #143f34, 0 6px 10px rgba(31, 92, 77, 0.3);
+}
+.music-toggle--header:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #143f34, 0 2px 6px rgba(31, 92, 77, 0.25);
+}
+.music-toggle--header.music-toggle--off {
+  --music-toggle-bg: #a2907f;
+  background: linear-gradient(180deg, #b9a89a 0%, #8a7565 100%);
+  color: #fff;
+  box-shadow: 0 4px 0 #5f4e40, 0 6px 10px rgba(95, 78, 64, 0.3);
+}
+.music-toggle--header.music-toggle--off:active {
+  box-shadow: 0 1px 0 #5f4e40, 0 2px 6px rgba(95, 78, 64, 0.25);
+}

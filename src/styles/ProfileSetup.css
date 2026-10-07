@@ -20,7 +20,9 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 36px 16px;
+  /* The extra top room is the music toggle's corner, above the card. */
+  position: relative;
+  padding: 64px 16px 36px;
 }
 
 /* Card wrapper */

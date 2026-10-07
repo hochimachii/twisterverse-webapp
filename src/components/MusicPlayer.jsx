@@ -39,8 +39,12 @@ const CAN_SET_VOLUME = (() => {
  *
  * `ducked` lowers the music under voice-over (see App.jsx), gliding
  * rather than jumping - or pauses it where the volume can't be set.
+ *
+ * `muted` is the student's own switch (MusicToggle). It pauses the music
+ * outright rather than silencing it, so nothing keeps playing or
+ * downloading unheard, and iOS - which ignores volume - honours it too.
  */
-export default function MusicPlayer({ src, ducked = false }) {
+export default function MusicPlayer({ src, ducked = false, muted = false }) {
   const audioRef = useRef(null);
   const fadeTimerRef = useRef(null);
   // Whether music *should* be playing — so returning to the tab doesn't
@@ -54,6 +58,10 @@ export default function MusicPlayer({ src, ducked = false }) {
   // Every path that starts playback checks it, so returning to the tab or
   // tapping the page can't bring the music back over the narration.
   const silencedRef = useRef(ducked && !CAN_SET_VOLUME);
+  // The `muted` prop, for the same listeners - they outlive the render
+  // that set them up. Starts from the prop so the very first play is
+  // already held back when the music was switched off last visit.
+  const mutedRef = useRef(muted);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -67,7 +75,7 @@ export default function MusicPlayer({ src, ducked = false }) {
     };
 
     const safePlay = () => {
-      if (silencedRef.current) return;
+      if (silencedRef.current || mutedRef.current) return;
       const attempt = audio.play();
       if (attempt && typeof attempt.catch === "function") {
         attempt.catch(() => {
@@ -109,7 +117,7 @@ export default function MusicPlayer({ src, ducked = false }) {
           audio.pause();
           audio.src = src;
           audio.load();
-          if (shouldPlayRef.current && !document.hidden && !silencedRef.current) {
+          if (shouldPlayRef.current && !document.hidden && !silencedRef.current && !mutedRef.current) {
             const attempt = audio.play();
             if (attempt && typeof attempt.then === "function") {
               attempt.then(fadeIn).catch((err) => {
@@ -181,7 +189,7 @@ export default function MusicPlayer({ src, ducked = false }) {
       silencedRef.current = ducked;
       if (ducked) {
         audio.pause();
-      } else if (!fadeTimerRef.current && shouldPlayRef.current && !document.hidden) {
+      } else if (!fadeTimerRef.current && shouldPlayRef.current && !document.hidden && !mutedRef.current) {
         // Resume - unless a crossfade is under way, which starts the
         // next track itself when it finishes.
         audio.play().catch(() => {});
@@ -209,5 +217,29 @@ export default function MusicPlayer({ src, ducked = false }) {
     fadeTimerRef.current = glide;
   }, [ducked]);
 
-  return <audio ref={audioRef} src={src} loop hidden preload="auto" />;
+  // --- Switched off and on by the student ---
+  // Every other path that starts playback checks mutedRef, so while it is
+  // set, nothing - a new screen's track, returning to the tab, a tap -
+  // brings the music back. Acting on changes only keeps the first render
+  // from repeating the play the track effect has just tried.
+  useEffect(() => {
+    if (mutedRef.current === muted) return;
+    mutedRef.current = muted;
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (muted) {
+      audio.pause();
+    } else if (shouldPlayRef.current && !silencedRef.current && !document.hidden) {
+      // Straight back at the level this screen calls for. Still under
+      // the narration on the screens that duck it - and on iOS, where
+      // ducking means pausing, it stays paused until the screen changes.
+      if (CAN_SET_VOLUME && !fadeTimerRef.current) audio.volume = targetVolumeRef.current;
+      audio.play().catch(() => {});
+    }
+  }, [muted]);
+
+  // Switched off, the track isn't even downloaded until it is switched
+  // back on - the three tracks come to about 10 MB.
+  return <audio ref={audioRef} src={src} loop hidden preload={muted ? "none" : "auto"} />;
 }

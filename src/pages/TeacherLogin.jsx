@@ -7,6 +7,7 @@ import {
   sendPasswordReset
 } from "../services/authService";
 import { SCHOOLS, sectionGroupsFor, gradeOfSection } from "../data/schools";
+import MusicToggle from "../components/MusicToggle";
 import "../styles/LoginPage.css";
 import "../styles/TeacherLogin.css";
 import backgroundImg from "../assets/login/background.PNG";
@@ -162,6 +163,8 @@ export default function TeacherLogin() {
         backgroundPosition: "center"
       }}
     >
+      <MusicToggle className="music-toggle--corner" />
+
       <div className="login-overlay">
         <span className="teacher-badge">{"\uD83C\uDF93"} Guro / Teacher</span>
 

@@ -19,6 +19,7 @@ import { FEATURES } from "../config";
 import { calculateScore } from "../utils/scoring";
 import { reciteSecondsFor } from "../utils/reciteTime";
 import Tutorial, { hasSeenTutorial, markTutorialSeen } from "../components/Tutorial";
+import MusicToggle from "../components/MusicToggle";
 import "../styles/TwisterActivity.css";
 
 import twistyHappy from "../assets/twisty/twisty-happy.PNG";
@@ -701,6 +702,7 @@ export default function TwisterActivity() {
         <button className="activity-back-btn" onClick={() => navigate("/stages")}>
           {"\u2B05\uFE0F"} Bumalik sa Mundo
         </button>
+        <MusicToggle className="music-toggle--corner" />
         <div className="activity-empty">
           <h1>Wala pang laman dito</h1>
           <p>Wala pang hamon para sa antas na ito.</p>
@@ -732,6 +734,11 @@ export default function TwisterActivity() {
           setHeardVoice(true);
         }}
       />
+
+      {/* Outside the art panel on purpose: on a landscape phone that card
+          is only about 200px wide, and Bumalik sa Mundo already fills its
+          top edge. Here it takes the screen's top-right corner. */}
+      <MusicToggle className="music-toggle--corner" />
 
       {/* The art panel. On phones it generates no box at all (display:
           contents), so the scene lays out exactly as it always has; on

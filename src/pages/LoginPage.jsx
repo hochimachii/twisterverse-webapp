@@ -9,6 +9,7 @@ import {
 import { friendlyAuthError, signOutUser } from "../services/authService";
 import { getTeacherByUid, teacherAccessProblem } from "../services/teacherService";
 import WelcomeOverlay from "../components/WelcomeOverlay";
+import MusicToggle from "../components/MusicToggle";
 import "../styles/LoginPage.css";
 import backgroundImg from "../assets/login/background.PNG";
 import logoImg from "../assets/login/logo.PNG";
@@ -88,6 +89,8 @@ export default function LoginPage() {
         backgroundPosition: "center"
       }}
     >
+      <MusicToggle className="music-toggle--corner" />
+
       <div className="login-overlay"> {/* optional dim layer for readability (style in CSS) */}
 
         <img src={logoImg} alt="TwisterVerse" className="login-logo" />

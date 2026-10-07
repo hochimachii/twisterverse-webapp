@@ -116,7 +116,8 @@
 .ending-scene__skip {
   position: absolute;
   top: calc(14px + env(safe-area-inset-top, 0px));
-  right: 14px;
+  /* Steps aside for the music toggle, which takes the corner. */
+  right: calc(14px + var(--music-toggle-size, 38px) + 8px);
   z-index: 3;
   padding: 8px 16px;
   border: 2px solid rgba(255, 255, 255, 0.5);

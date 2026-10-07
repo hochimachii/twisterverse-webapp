@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import MusicToggle from "../components/MusicToggle";
 import twistyNeutral from "../assets/twisty/twisty-neutral.PNG";
 import twistyHappy from "../assets/twisty/twisty-happy.PNG";
 // Recorded narration, one file per beat, in beat order ("Opening 1-7"
@@ -320,6 +321,8 @@ export default function OpeningScene() {
       <button className="opening-skip-btn" onClick={goToDashboard}>
         Laktawan {"\u23ED\uFE0F"}
       </button>
+
+      <MusicToggle className="music-toggle--corner" />
 
       <div className="opening-stage">
         <LibraryScene />

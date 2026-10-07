@@ -22,6 +22,7 @@ import {
 } from "../services/teacherService";
 import { subscribeToAuthState, signOutUser } from "../services/authService";
 import TeacherApprovals from "../components/TeacherApprovals";
+import MusicToggle from "../components/MusicToggle";
 import { WORLDS, totalLevelCount } from "../data/worlds";
 import "../styles/Dashboard.css";
 import "../styles/TeacherDashboard.css";
@@ -434,9 +435,12 @@ export default function TeacherDashboard() {
               )
             )}
           </h1>
-          <button className="header-btn header-btn--signout" onClick={handleSignOut}>
-            {"\uD83D\uDEAA"} Lumabas
-          </button>
+          <div className="dashboard-header__actions">
+            <MusicToggle className="music-toggle--header" />
+            <button className="header-btn header-btn--signout" onClick={handleSignOut}>
+              {"\uD83D\uDEAA"} Lumabas
+            </button>
+          </div>
         </header>
 
         {isMaster && (
