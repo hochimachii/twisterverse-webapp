@@ -1,0 +1,29 @@
+/* src/styles/AppFrame.css
+ *
+ * .app-frame wraps every student screen (see App.jsx). It is a query
+ * container, and that is its whole job now.
+ *
+ * HISTORY: it used to be a phone-shaped frame. Every stage background is
+ * 2160x3840 - exactly 9:16 - and the pages paint them with
+ * background-size: cover, so a landscape desktop cropped most of the art
+ * away. The first fix squeezed the whole app into a 9:16 column on wide
+ * screens, which kept the art intact but left most of a laptop screen
+ * dark. Screens now adapt per platform instead: card screens and the login
+ * use the full width, and the story scenes (opening, meet-the-guide,
+ * activity, ending) get a split layout on landscape screens - the art in
+ * a portrait card, the UI beside it - so the frame is gone.
+ *
+ * The teacher dashboard never sat inside this wrapper - it is a data
+ * table built for a wide screen.
+ */
+
+.app-frame {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  /* The page stylesheets query THIS, not the window: their breakpoints
+     are written as @container app (...). Without it every one of those
+     rules silently stops applying. */
+  container-type: inline-size;
+  container-name: app;
+}

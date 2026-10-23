@@ -1,0 +1,465 @@
+# Enabling server-side speech (Blaze)
+
+`twisterverse-8d5eb` is on the Blaze plan, so the existing project stays as it
+is — same project ID, same Auth users, same Firestore data, same hosting URL.
+Nothing is migrated. `.env.local` and `.firebaserc` already point at it
+correctly and need no changes.
+
+**STATUS: working and verified on a real iPhone, 2026-09-05.** Two Filipino
+twisters transcribed at 100% ("bibo bumulong bago bumangon", "popoy pato ay
+pumapadyak sa putik", confidence 0.76-0.84), a third at 80%, and the audio for
+all three plays back in the Teacher Dashboard. Speech-to-Text API enabled,
+`transcribe` running in `asia-southeast1` (Node 22, 2nd gen), Artifact Registry
+cleanup at 3 days, `serverTranscription` and `mobileServerTranscription` on,
+hosting released to two sites.
+
+Still untested: **a signed-in Android student**, which now takes the same server
+path. Steps 1-4 below are done and kept as a record of how.
+
+**Why this work exists:** iOS/Safari and the Facebook/Messenger/Instagram in-app
+browsers reject the Web Speech API, so those students currently can't play at
+all. Server-side transcription is the only fix, and it needs a Cloud Function,
+which is why Blaze was needed.
+
+---
+
+## 1. Enable the Speech-to-Text API
+
+This one lives in the Google Cloud console, not Firebase:
+
+<https://console.cloud.google.com/apis/library/speech.googleapis.com?project=twisterverse-8d5eb>
+
+Click **Enable**. The function will deploy fine without this and then fail at
+runtime, so don't skip it.
+
+## 2. Set a budget alert
+
+This is the first thing in the app that costs money per use, so do this before
+deploying.
+
+Google Cloud console > Billing > Budgets & alerts > Create budget. Something
+small (₱500 / $10), alerts at 50/90/100%.
+
+Know what a budget alert is and isn't: it **emails you, it does not stop
+spending**. There is no hard spend cap in Google Cloud. The real protections are
+built into `functions/index.js` — sign-in required, a 4 MB payload cap, and
+`maxInstances: 10`.
+
+Cost scales with mobile use. Speech-to-Text gives 60 minutes free per month,
+then about $0.016/min; Cloud Functions gives 2M invocations free.
+
+Since `FEATURES.mobileServerTranscription` was turned on, **every attempt from a
+phone calls Speech-to-Text** - that is what buys Android audio recordings. The
+free tier covers roughly 400-700 recitations a month depending on length; past
+that a 10-second attempt costs about $0.003, so ~1,000 extra attempts is a few
+dollars. Desktop attempts stay free: they never call the API.
+
+## 3. Deploy the function
+
+Dependencies are already installed in `functions/`. From `twisterverse-client/`:
+
+```bash
+firebase deploy --only functions
+```
+
+First 2nd-gen deploy takes a few minutes and will ask to enable Cloud Functions,
+Cloud Build, Artifact Registry and Eventarc — say yes. (`firebase functions:list`
+failing before this point is expected; the API isn't on yet.)
+
+## 4. Turn the feature on
+
+In `src/config.js`:
+
+```js
+serverTranscription: true,
+```
+
+Then:
+
+```bash
+npm run build && firebase deploy --only hosting
+```
+
+iOS and in-app browsers now record audio and send it to the function instead of
+showing "not yet supported".
+
+Leave `mobileAudioRecording: false`. That flag is about Android's Web Speech API
+fighting `getUserMedia` for the microphone — unrelated to this change, and the
+test results are in the `src/config.js` comment. Once server transcription is
+proven, moving Android to the server path too is a separate, deliberate change.
+
+## Test results (2026-09-05, synthetic audio)
+
+The pipeline was tested end to end against the deployed function using a
+throwaway auth account (created and deleted; no residue in Auth) and
+TTS-generated audio.
+
+**Working:** `chirp_2` does serve `fil-PH` from `asia-southeast1`, v2
+auto-decoding read the audio, round trip ~1.0-1.5s, callable returns a real
+transcript.
+
+**Phrase hints measurably help.** Identical audio, hints on vs off:
+
+| hints | transcript |
+| --- | --- |
+| on  | `bibo` give me a long bag of `bumangon` |
+| off | `bebo` give me a long bag of `boom again` |
+
+Both corrections moved toward the real target words. Keep the adaptation.
+
+**The recognizer hallucinates on non-speech, confidently.** This was the
+significant find:
+
+| input | confidence | transcript |
+| --- | --- | --- |
+| 1s digital silence | 0.08 | `bibi` |
+| 3s quiet noise | 0.59 | `bibo bibo` |
+| 3s 200Hz hum | 0.70 | `0 1 2 3 4 5 6 7 8 9 10` |
+| real speech | 0.71 | `bibo give me a long bag of bumangon` |
+
+Two consequences. First, **a confidence threshold cannot filter this** - 0.70
+non-speech against 0.71 speech leaves no separating value, so don't try it.
+Second, the hallucinations are biased toward the phrase hints, so silence from
+an iOS student would have been scored as a wrong recitation and logged as a
+failed attempt - losing the deliberate "mic failure is not a failed attempt"
+behaviour in `finishAttempt`. Fixed by screening silence on the client before
+sending: `hasAudibleAudio` in `src/services/speechService.js`.
+
+**Scoring is robust.** `src/utils/speechScoring.js` was checked against the
+real transcripts: v/b and o/u drift, and word-boundary splits, all still score
+100%; genuinely wrong recitations score 0%. Hallucinated fragments like `bibo`
+score 25% and fail, so no student can pass by staying silent.
+
+**Not tested, and it matters:** a real Filipino child's voice. Every result
+above used a robotic en-US voice reading Tagalog, which is close to worst-case
+input and says nothing reliable about real-world accuracy. That is what step 5
+is for.
+
+## 5. Verify
+
+- [ ] Desktop Chrome still completes a twister (browser speech, untouched)
+- [ ] **An iPhone completes a twister** — this is the whole point
+- [x] `firebase functions:log --only transcribe` shows the call
+- [ ] Teacher dashboard shows the attempt
+- [ ] Cloud console > Billing shows near-zero spend after a few days
+
+---
+
+## Firestore rules — read before deploying them
+
+`firebase deploy --only firestore:rules` **overwrites whatever is live** with
+`firestore.rules` from this repo. Only Hosting has ever been deployed from here,
+so the live rules may have been edited directly in the console and may not match
+this file.
+
+Compare them first: Firebase console > Firestore Database > Rules. If they
+match, deploy freely. If they don't, reconcile before deploying — a mismatch
+either locks students out or opens data up, and neither is obvious afterwards.
+
+Last compared 2026-09-22, just before the teacher-verification rules: the live
+Firestore and Storage rules were identical to this repo's, so nothing had been
+edited in the console.
+
+Nothing in this speech work requires a rules deploy. Leave it alone if in doubt.
+
+## Hosting caching - don't remove the headers block
+
+Firebase Hosting's default is `Cache-Control: max-age=3600` on **everything**,
+including `index.html`. Since `index.html` is what names the content-hashed JS
+bundle, a cached copy pins a device to an old build for up to an hour. This
+caused real confusion during testing: a phone kept running two-deploys-old code
+while the server had the new one, and the symptoms looked like application bugs.
+
+`firebase.json` now sets:
+
+- `**` -> `no-cache, max-age=0, must-revalidate`
+- `/static/**` -> `public, max-age=31536000, immutable` (safe: the build
+  content-hashes these filenames)
+
+Order matters and is easy to get backwards: Firebase applies header rules in
+order with the **last match winning**, so the broad rule goes first and
+`/static/**` overrides it afterwards. Putting the catch-all last silently makes
+every asset uncacheable.
+
+To confirm after a deploy:
+
+```bash
+curl -sI https://playtwisterverse.web.app/ | grep -i cache-control
+```
+
+## Hosting: two sites, one build
+
+`firebase.json` deploys the same `build/` to two Hosting sites, so
+`firebase deploy --only hosting` keeps both in sync:
+
+- **https://playtwisterverse.web.app** - the one to share
+- https://twisterverse-8d5eb.web.app - the original default, kept alive so
+  links shared before the rename don't break
+
+Plain `twisterverse` was unavailable (reserved by an unrelated project).
+Adding extra Hosting sites requires Blaze, so this only became possible with
+the plan upgrade.
+
+Note that a name being unclaimed can't be confirmed by loading it - an
+unclaimed site and a claimed-but-never-deployed one both return the same 404.
+`firebase hosting:sites:create <name>` is the only real test.
+
+Auth is unaffected: the app uses email/password, and Firebase's authorized-
+domains list only gates OAuth and email-link sign-in, neither of which this
+app uses.
+
+## Recitation audio: Firebase Storage
+
+Audio moved off Cloudinary on 2026-09-14. Cloudinary URLs are public and
+unauthenticated - anyone holding a link could play a child's recording forever -
+and uploads used an unsigned preset visible in the JS bundle. Firebase Storage
+had only been avoided because it needs Blaze.
+
+Files live at `attempts/{studentUid}/w{world}_l{level}_{timestamp}.{ext}`, and
+the attempt document stores that **path**, never a URL. This is the point of the
+whole migration: `getDownloadURL()` returns a tokenised link that works for
+anyone who has it, which is exactly the Cloudinary weakness. So the dashboard
+fetches bytes through the SDK with the teacher's own credentials, and
+`storage.rules` actually decides who may listen.
+
+Verified against the live bucket with throwaway accounts:
+
+| request | result |
+| --- | --- |
+| student uploads to own folder | 200 |
+| student uploads to another student's folder | 403 |
+| owner reads own recording | 200 |
+| teacher reads a student's recording | 200 |
+| another student reads it | 403 |
+| anonymous reads it | 403 |
+
+### Required IAM grant - do not skip this if the project is ever rebuilt
+
+`storage.rules` identifies teachers with `firestore.exists(...)`. **Cross-service
+rules only work if the Cloud Storage service agent can read Firestore.** Without
+that grant the lookup cannot evaluate, and every teacher is silently denied - no
+error, recordings just never load in the dashboard.
+
+Cloud console > IAM & Admin > Grant access:
+
+```
+service-970295167833@gcp-sa-firebasestorage.iam.gserviceaccount.com
+```
+
+Role: **Cloud Datastore Viewer**. The agent may only appear with "Include
+Google-provided role grants" ticked. The number in the address is the project
+number; a rebuilt project has a different one.
+
+Before this grant the teacher row above returned 403 while the other five
+passed, which is what made it identifiable.
+
+### Older recordings
+
+Attempts written before the migration keep their Cloudinary `audioUrl`, and
+always will: `attempts` is append-only by `firestore.rules`, so those fields can
+never be rewritten. `AttemptAudio` in the Teacher Dashboard plays whichever field
+is present. The CSV export lists `audioUrl` or `audioPath` in its Audio column -
+old rows are clickable links, new rows are paths to play back in the dashboard.
+
+---
+
+## Teacher verification
+
+Added 2026-09-22 at the client's request. Signing up as a teacher no longer
+opens the dashboard: it files a **request**, and the admin approves it first.
+
+**The flow.** The sign-up form asks for first, middle (optional) and last name,
+school and section, plus the username/email and password. That creates the
+Auth account and a `teachers/{uid}` document with `status: "pending"`, then
+signs the new account straight back out. Logging in while pending shows a
+"waiting for approval" notice; a rejected or revoked account is told to contact
+the admin. The section list comes from `src/data/schools.js`, grouped by grade,
+and the grade is stored alongside it.
+
+**The admin** is any teacher whose document has `isMaster: true`. At the time of
+writing that is one account, Jeremy's real-email login (uid
+`Qd7633EpreYJAaYv9vAv1kCuk7D3`). Their Teacher Dashboard gains a **Mga Guro**
+tab, with a red count when requests are waiting. It has three lists:
+
+- waiting requests, oldest first (**Aprubahan** / **Tanggihan**)
+- approved teachers (**Bawiin**, which asks for confirmation first)
+- rejected or revoked teachers (**Aprubahan**)
+
+Every decision can be reversed. `isMaster` itself can only be set by hand in the
+Firebase console, since the rules refuse it from the app.
+
+**Where it is enforced.** The screens only explain the decision. What actually
+enforces it:
+
+- `firestore.rules`: `isTeacher()` now requires an approved record, so a
+  pending or rejected account reads no student data however it calls
+  Firestore. A teacher can create only their own record, only as a pending
+  request with exactly the sign-up fields, and only with a username that
+  matches the account's own login. Only the admin can update records, and only
+  `status`, `reviewedBy` (must be the admin) and `reviewedAt` (must be the
+  server time). The admin's own record and other master records can't be
+  changed.
+- `firestore.rules` also refuses a student record for any account that has a
+  teacher record, whatever its status. See "Teachers on the student login"
+  below.
+- `storage.rules`: recordings are readable by approved teachers only.
+- `functions/index.js`: `resetStudentPassword` refuses teachers who aren't
+  approved. The Admin SDK ignores the rules, so the check is repeated there.
+
+**Teachers on the student login.** Only plain usernames are kept apart by role,
+since they map to different invented domains. A real email address is one
+Firebase login on both pages, so a teacher's email logs in on the student page
+too. Found 2026-09-24: an approved teacher did exactly that, was sent to
+student Profile Setup, and could not save. The student page now sends a
+teacher to the teacher dashboard, or gives the same pending/rejected message
+the teacher page would. Profile Setup sends a teacher's session away too, and
+the rule above is the backstop.
+
+These rules close a hole in the version they replaced. That version let any
+signed-in user write their own teacher record, so any teacher could give
+themselves `isMaster`, and anyone could make themselves a teacher.
+
+Tested before deploying with the Firebase Rules test API (`projects.test`,
+which evaluates a rules source against simulated requests without deploying).
+There are 77 Firestore cases: reads by every kind of account, sign-up
+requests with each field wrong, every review path, and student-record writes by
+every kind of account. There are 10 Storage cases. All pass. Each change was
+also run against the rules it replaced, and the suites failed exactly its new
+security cases: 34 + 2 on 2026-09-22, and the 5 teacher-as-student cases on
+2026-09-24. That shows the tests can tell the difference.
+
+**Accounts from before verification** have no `status` field. They count as
+approved everywhere (rules, function and app), so nobody was locked out when
+this shipped. They show in the admin's approved list with "Account bago ang
+pag-apruba", and can be revoked like any other.
+
+**Unchanged:** a teacher still sees their whole school's students. The section
+is recorded for the admin to verify, and does not narrow the dashboard.
+
+**Deploy order.** Deploy Hosting first, then the rules, then the function:
+
+```bash
+npm run build && firebase deploy --only hosting
+```
+
+```bash
+firebase deploy --only firestore:rules,storage
+```
+
+```bash
+firebase deploy --only functions:resetStudentPassword
+```
+
+In the other order, the new rules would refuse sign-ups from the old app for as
+long as someone still has it open. That would leave an Auth account with no
+request document, and a username nobody can use. Before the rules deploy, read
+the rules section above: compare what is live first.
+
+---
+
+## Deleting students
+
+Added 2026-09-24. The admin (a teacher with `isMaster`) can delete a student
+from that student's panel in the Teacher Dashboard: **Burahin ang Mag-aaral**,
+then **Oo, Burahin** to confirm. Other teachers don't see the button, and the
+function refuses them anyway.
+
+It deletes everything, through the `deleteStudent` Cloud Function (logic in
+`functions/students.js`), in this order:
+
+1. the login, so the student can't sign back in partway, and the username is
+   free again afterwards
+2. their recordings, `attempts/{uid}/` in Storage
+3. every attempt with their uid
+4. `progress/{uid}`
+5. `users/{uid}`, last. A delete that fails partway leaves the student on the
+   dashboard, and deleting them again finishes the job.
+
+There is no undo, so export first if the data is still needed. All recordings
+were in Storage when this shipped (none left on Cloudinary), so a delete
+removes every recording.
+
+It is a function because only the Admin SDK can delete someone else's login,
+and `firestore.rules` keep attempts append-only for everyone else. Functions
+run as the default compute service account, which has Editor on the project.
+That covers Auth, Firestore and Storage. If that role is ever narrowed,
+deleting needs Firebase Authentication Admin, Cloud Datastore User and Storage
+Object Admin.
+
+Each delete is logged: who deleted whom, and how many attempts and recordings.
+The student's data itself is never logged:
+
+```bash
+firebase functions:log --only deleteStudent
+```
+
+A student still playing when they are deleted keeps a valid session until their
+token expires, at most an hour. An attempt or progress update saved in that
+window is left without a login. The dashboard never lists it, since nothing
+recreates the `users` record during play.
+
+---
+
+## Things worth knowing
+
+**Region has to match in two places.** `REGION` in `functions/index.js` and
+`FUNCTIONS_REGION` in `src/services/speechService.js`, both `asia-southeast1`.
+The Functions SDK defaults to `us-central1`, so a mismatch appears as a CORS or
+404 error that says nothing about regions.
+
+**The recognition model is the most likely thing to need adjusting.**
+`functions/index.js` uses `chirp_2` for its Filipino coverage, but model
+availability varies by language *and* region and Google changes it over time. If
+the first real call errors on model or language, check what's offered for
+`fil-PH` in `asia-southeast1` in the Cloud console — it's a one-constant fix, not
+a code bug.
+
+**Speech-to-Text v2, not v1, is deliberate.** iOS Safari records MP4/AAC, which
+v1 cannot decode at all. v2's auto-decoding handles iOS MP4 and Android
+WEBM/Opus through one path. Don't "simplify" it back to v1.
+
+**App Check is the next hardening step.** `transcribe` requires sign-in, but a
+signed-in student could still call it in a loop. Once reCAPTCHA Enterprise is
+registered and App Check is initialized on the client, set
+`ENFORCE_APP_CHECK = true` in `functions/index.js`. In that order — reversed, it
+locks out every real user.
+
+---
+
+## Appendix: moving to a different Firebase project
+
+Not needed now, kept in case it ever is. `scripts/migrate-firestore.js` copies
+the `users`, `progress`, `teachers` and `attempts` collections between projects,
+preserving document IDs.
+
+**Auth users must be imported before Firestore** — the profile documents are
+keyed by Auth UID, and importing the other way orphans every one of them.
+
+```bash
+firebase auth:export users.json --format=json --project twisterverse-8d5eb
+```
+
+Passwords only survive if the old project's SCRYPT parameters are passed
+explicitly (Authentication > Users > three-dot menu > **Password hash
+parameters**):
+
+```bash
+firebase auth:import users.json --hash-algo=SCRYPT --hash-key <base64_signer_key> --salt-separator <base64_salt_separator> --rounds <rounds> --mem-cost <mem_cost> --project <new-project-id>
+```
+
+Without those flags every account arrives with an unusable password — and since
+logins map usernames to fake domains, there is no email reset path.
+
+Then, with `firebase-admin` installed (`npm install --no-save firebase-admin`)
+and a service-account key per project:
+
+```bash
+node scripts/migrate-firestore.js export --key old-serviceaccount.json
+```
+
+```bash
+node scripts/migrate-firestore.js import --key new-serviceaccount.json --dry-run
+```
+
+Drop `--dry-run` once the counts look right. Delete the key files afterwards —
+they are full-access credentials that bypass `firestore.rules` entirely.

@@ -1,75 +1,87 @@
-<<<<<<< HEAD
-# Getting Started with Create React App
+# Twisterverse
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A Filipino tongue-twister diction game for Grade 7 students. Students travel
+through four story worlds, listen to a recorded reading of each tongue
+twister, then recite it; the app checks the recitation word by word and
+awards points. Teachers follow each student's progress, listen to their
+recordings and export the results for grading.
 
-## Available Scripts
+**Live:** https://playtwisterverse.web.app
 
-In the project directory, you can run:
+## Features
 
-### `npm start`
+- **Four worlds, 80 tongue twisters** (Mundo 1 to 4, 20 levels each), each
+  with its own guide character, plus keys, ranks and a closing cinematic.
+- **Listen first, then recite.** Each level plays a recorded model reading
+  before the student speaks.
+- **Speech recognition on every device.** Phones, tablets and in-app
+  browsers (Messenger, Facebook) send the recording to Google Cloud
+  Speech-to-Text (the Chirp 2 model, in Filipino) through a Cloud Function.
+  Desktop Chrome uses the browser's built-in recognition.
+- **Fair, predictable scoring.** Sound-alike spellings count as the same,
+  small slips inside long words are forgiven, and every word counts. A
+  silence check stops background noise from being scored. Each line's time
+  limit grows with its length.
+- **Teacher Dashboard.** Students by school, grade and section; every
+  attempt with what the app heard and the recording; CSV exports; password
+  resets. New teacher accounts wait for the administrator's approval, and
+  the administrator can delete a student.
+- **Background music** with an on/off switch on every screen.
+- The interface is in Filipino.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Built with
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- React 19 (Create React App) and React Router 7
+- Firebase: Authentication, Cloud Firestore, Cloud Storage, Hosting, and
+  Cloud Functions (2nd gen, Node 22, `asia-southeast1`)
+- Google Cloud Speech-to-Text v2
 
-### `npm test`
+## Project layout
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+| Path | What is there |
+|---|---|
+| `src/pages/` | One component per screen: login, profile, story scenes, dashboard, map, activity, Teacher Dashboard |
+| `src/components/` | Shared pieces: music player and toggle, tutorial, teacher approvals |
+| `src/services/` | Everything that talks to Firebase: accounts, progress, attempts, speech, recordings |
+| `src/utils/` | Scoring, recitation comparison, time limits, CSV export |
+| `src/data/` | The worlds and tongue twisters, schools and sections, avatars, recorded readings |
+| `functions/` | Cloud Functions: `transcribe`, `resetStudentPassword`, `deleteStudent` |
+| `firestore.rules`, `storage.rules` | Security rules for the database and recordings |
+| `FIREBASE-SETUP.md` | Firebase project setup, deployment notes and the reasons behind them |
 
-### `npm run build`
+## Running locally
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Requires Node.js and access to a Firebase project.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+npm install
+cp .env.example .env.local   # then fill in the Firebase web config
+npm start                    # http://localhost:3000
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+The app talks to whichever Firebase project `.env.local` points at; there
+is no emulator setup. Server-side speech recognition also needs the
+`transcribe` function deployed to that project.
 
-### `npm run eject`
+To build for production:
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```bash
+npm run build
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Deploying
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Deployment uses the Firebase CLI. **Read `FIREBASE-SETUP.md` before
+deploying rules or functions**: it covers the Blaze plan, the
+Speech-to-Text API, the required IAM grants, and why the live rules must be
+compared with the repository first.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+```bash
+npm run build && firebase deploy --only hosting   # the website (both hosting sites)
+firebase deploy --only firestore:rules,storage    # security rules
+firebase deploy --only functions:transcribe       # one function at a time
+```
 
-## Learn More
+## License
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
-=======
-# twisterverse-webapp
-Educational tongue‑twister web app featuring voice detection, progress tracking, and custom visuals
->>>>>>> 56e6ce796026beb23feda526d6413754559536fe
+MIT. See [LICENSE](LICENSE).
